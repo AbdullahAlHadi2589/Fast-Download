@@ -51,6 +51,55 @@ function run(cmd, options = {}) {
     }
 }
 
+// Dry-run safe filesystem operations
+function mkdirSyncSafe(dir, options) {
+    if (dryRun) {
+        log(`DRY RUN: mkdir -p ${dir}`, 'info');
+        return;
+    }
+    fs.mkdirSync(dir, options);
+}
+
+function copyFileSyncSafe(src, dst) {
+    if (dryRun) {
+        log(`DRY RUN: cp ${src} ${dst}`, 'info');
+        return;
+    }
+    fs.copyFileSync(src, dst);
+}
+
+function chmodSyncSafe(file, mode) {
+    if (dryRun) {
+        log(`DRY RUN: chmod ${mode.toString(8)} ${file}`, 'info');
+        return;
+    }
+    fs.chmodSync(file, mode);
+}
+
+function appendFileSyncSafe(file, content) {
+    if (dryRun) {
+        log(`DRY RUN: append to ${file}: ${content.trim()}`, 'info');
+        return;
+    }
+    fs.appendFileSync(file, content);
+}
+
+function copyFileSyncSafeForBackup(src, dst) {
+    if (dryRun) {
+        log(`DRY RUN: cp ${src} ${dst} (backup)`, 'info');
+        return;
+    }
+    fs.copyFileSync(src, dst);
+}
+
+function writeFileSyncSafe(file, content) {
+    if (dryRun) {
+        log(`DRY RUN: write to ${file}`, 'info');
+        return;
+    }
+    fs.writeFileSync(file, content);
+}
+
 function hasCmd(cmd) {
     try {
         execSync(`which ${cmd}`, { stdio: 'ignore' });
@@ -87,7 +136,7 @@ async function main() {
 
     // 3. Create install directory
     if (!fs.existsSync(INSTALL_DIR)) {
-        fs.mkdirSync(INSTALL_DIR, { recursive: true });
+        mkdirSyncSafe(INSTALL_DIR, { recursive: true });
         log(`Created ${INSTALL_DIR}`);
     }
 
@@ -97,9 +146,9 @@ async function main() {
         const src = path.join(REPO_ROOT, 'src', lib);
         const dst = path.join(INSTALL_DIR, lib);
         if (fs.existsSync(src)) {
-            fs.copyFileSync(src, dst);
+            copyFileSyncSafe(src, dst);
             if (lib.endsWith('.sh')) {
-                fs.chmodSync(dst, 0o755);
+                chmodSyncSafe(dst, 0o755);
             }
             log(`Copied ${lib}`, 'success');
         }
@@ -185,7 +234,7 @@ async function main() {
     if (shellRc && fs.existsSync(shellRc)) {
         const content = fs.readFileSync(shellRc, 'utf8');
         if (!content.includes(INSTALL_DIR)) {
-            fs.appendFileSync(shellRc, `\n# fast-download\n${pathEntry}\n`);
+            appendFileSyncSafe(shellRc, `\n# fast-download\n${pathEntry}\n`);
             log(`Added ${INSTALL_DIR} to PATH in ${shellRc}`, 'success');
         }
     }
@@ -227,7 +276,7 @@ async function main() {
 function deployDir(src, dst) {
     if (!fs.existsSync(src)) return;
     if (!fs.existsSync(dst)) {
-        fs.mkdirSync(dst, { recursive: true });
+        mkdirSyncSafe(dst, { recursive: true });
     }
     copyRecursive(src, dst);
     log(`${path.basename(src)} deployed to ${dst}`, 'success');
@@ -237,9 +286,9 @@ function deployFile(src, dst) {
     if (!fs.existsSync(src)) return;
     const dir = path.dirname(dst);
     if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+        mkdirSyncSafe(dir, { recursive: true });
     }
-    fs.copyFileSync(src, dst);
+    copyFileSyncSafe(src, dst);
     log(`${path.basename(src)} deployed to ${dst}`, 'success');
 }
 
@@ -250,11 +299,11 @@ function copyRecursive(src, dst) {
         const dstPath = path.join(dst, entry.name);
         if (entry.isDirectory()) {
             if (!fs.existsSync(dstPath)) {
-                fs.mkdirSync(dstPath, { recursive: true });
+                mkdirSyncSafe(dstPath, { recursive: true });
             }
             copyRecursive(srcPath, dstPath);
         } else {
-            fs.copyFileSync(srcPath, dstPath);
+            copyFileSyncSafe(srcPath, dstPath);
         }
     }
 }

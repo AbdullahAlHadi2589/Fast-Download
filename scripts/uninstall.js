@@ -44,6 +44,39 @@ function run(cmd, options = {}) {
     }
 }
 
+// Dry-run safe filesystem operations
+function rmSyncSafe(path, options) {
+    if (dryRun) {
+        log(`DRY RUN: rm -rf ${path}`, 'info');
+        return;
+    }
+    fs.rmSync(path, options);
+}
+
+function unlinkSyncSafe(path) {
+    if (dryRun) {
+        log(`DRY RUN: rm ${path}`, 'info');
+        return;
+    }
+    fs.unlinkSync(path);
+}
+
+function copyFileSyncSafeForBackup(src, dst) {
+    if (dryRun) {
+        log(`DRY RUN: cp ${src} ${dst} (backup)`, 'info');
+        return;
+    }
+    fs.copyFileSync(src, dst);
+}
+
+function writeFileSyncSafe(file, content) {
+    if (dryRun) {
+        log(`DRY RUN: write to ${file}`, 'info');
+        return;
+    }
+    fs.writeFileSync(file, content);
+}
+
 function hasCmd(cmd) {
     try {
         execSync(`which ${cmd}`, { stdio: 'ignore' });
@@ -82,9 +115,9 @@ async function main() {
         if (fs.existsSync(config.path)) {
             try {
                 if (config.type === 'dir') {
-                    fs.rmSync(config.path, { recursive: true, force: true });
+                    rmSyncSafe(config.path, { recursive: true, force: true });
                 } else {
-                    fs.unlinkSync(config.path);
+                    unlinkSyncSafe(config.path);
                 }
                 log(`Removed ${name} config`, 'success');
             } catch (e) {
@@ -96,7 +129,7 @@ async function main() {
     // Remove install directory
     if (fs.existsSync(INSTALL_DIR)) {
         try {
-            fs.rmSync(INSTALL_DIR, { recursive: true, force: true });
+            rmSyncSafe(INSTALL_DIR, { recursive: true, force: true });
             log(`Removed ${INSTALL_DIR}`, 'success');
         } catch (e) {
             log(`Failed to remove install dir: ${e.message}`, 'warn');
@@ -117,12 +150,12 @@ async function main() {
             let content = fs.readFileSync(rc, 'utf8');
             if (content.includes(INSTALL_DIR) || content.includes('fast-download')) {
                 // Create backup
-                fs.copyFileSync(rc, `${rc}.bak`);
+                copyFileSyncSafeForBackup(rc, `${rc}.bak`);
                 // Remove fast-download lines
                 const lines = content.split('\n').filter(line => 
                     !line.includes(INSTALL_DIR) && !line.includes('fast-download')
                 );
-                fs.writeFileSync(rc, lines.join('\n'));
+                writeFileSyncSafe(rc, lines.join('\n'));
                 log(`Removed PATH entry from ${rc}`, 'success');
             }
         }

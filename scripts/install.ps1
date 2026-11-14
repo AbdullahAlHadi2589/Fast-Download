@@ -29,6 +29,7 @@ param(
     [switch]$SkipPipConfig,
     [switch]$ApplyGlobalConfigs,
     [switch]$OnlyAgent,
+    [switch]$DryRun,
     [ValidateSet('opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp','all')]
     [string]$Agent = 'all',
     [string]$InstallDir = "$env:USERPROFILE\.fast-download"
@@ -49,6 +50,26 @@ function Test-Admin {
 function Test-Command {
     param([string]$Name)
     Get-Command $Name -ErrorAction SilentlyContinue
+}
+
+# Dry-run safe helpers
+function Invoke-DryRunSafe {
+    param([scriptblock]$Action, [string]$Description)
+    if ($DryRun) {
+        Write-Log "DRY RUN: $Description" 'Info'
+        return
+    }
+    & $Action
+}
+
+function New-DirectorySafe {
+    param([string]$Path)
+    Invoke-DryRunSafe { New-Item -ItemType Directory -Path $Path -Force | Out-Null } "mkdir -p $Path"
+}
+
+function Copy-ItemSafe {
+    param([string]$Source, [string]$Destination)
+    Invoke-DryRunSafe { Copy-Item $Source $Destination -Force } "cp $Source $Destination"
 }
 
 function Find-Git {
@@ -125,7 +146,7 @@ if ($gitExe) {
 
 # 3. Create install directory
 if (-not (Test-Path $InstallDir)) {
-    New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    New-DirectorySafe -Path $InstallDir
     Write-Log "Created $InstallDir" 'Info'
 }
 
@@ -134,21 +155,21 @@ $repoRoot = "$PSScriptRoot\.."
 $srcLib = "$repoRoot\src\fast-download.sh"
 $dstLib = "$InstallDir\fast-download.sh"
 if (Test-Path $srcLib) {
-    Copy-Item $srcLib $dstLib -Force
+    Copy-ItemSafe -Source $srcLib -Destination $dstLib
     Write-Log "Copied fast-download.sh to $InstallDir" 'Success'
 }
 
 $srcFish = "$repoRoot\src\fast-download.fish"
 $dstFish = "$InstallDir\fast-download.fish"
 if (Test-Path $srcFish) {
-    Copy-Item $srcFish $dstFish -Force
+    Copy-ItemSafe -Source $srcFish -Destination $dstFish
     Write-Log "Copied fast-download.fish to $InstallDir" 'Success'
 }
 
 $srcNu = "$repoRoot\src\fast-download.nu"
 $dstNu = "$InstallDir\fast-download.nu"
 if (Test-Path $srcNu) {
-    Copy-Item $srcNu $dstNu -Force
+    Copy-ItemSafe -Source $srcNu -Destination $dstNu
     Write-Log "Copied fast-download.nu (nushell) to $InstallDir" 'Success'
 }
 
@@ -156,7 +177,7 @@ if (Test-Path $srcNu) {
 $psModule = "$repoRoot\opencode\FastDownload.psm1"
 $dstModule = "$InstallDir\FastDownload.psm1"
 if (Test-Path $psModule) {
-    Copy-Item $psModule $dstModule -Force
+    Copy-ItemSafe -Source $psModule -Destination $dstModule
     Write-Log "Copied FastDownload.psm1 to $InstallDir" 'Success'
 }
 
@@ -166,12 +187,12 @@ if ($ApplyGlobalConfigs) {
     
     if ($gitExe) {
         Write-Log "Applying Git optimizations..." 'Info'
-        & $gitExe config --global core.compression 9
-        & $gitExe config --global core.preloadIndex true
-        & $gitExe config --global core.fscache true
-        & $gitExe config --global http.postBuffer 524288000
-        & $gitExe config --global http.lowSpeedLimit 0
-        & $gitExe config --global http.lowSpeedTime 999999
+        Invoke-DryRunSafe { & $gitExe config --global core.compression 9 } "git config --global core.compression 9"
+        Invoke-DryRunSafe { & $gitExe config --global core.preloadIndex true } "git config --global core.preloadIndex true"
+        Invoke-DryRunSafe { & $gitExe config --global core.fscache true } "git config --global core.fscache true"
+        Invoke-DryRunSafe { & $gitExe config --global http.postBuffer 524288000 } "git config --global http.postBuffer 524288000"
+        Invoke-DryRunSafe { & $gitExe config --global http.lowSpeedLimit 0 } "git config --global http.lowSpeedLimit 0"
+        Invoke-DryRunSafe { & $gitExe config --global http.lowSpeedTime 999999 } "git config --global http.lowSpeedTime 999999"
         Write-Log "Git config applied" 'Success'
     } else {
         Write-Log "Git not found, skipping Git config" 'Warn'
@@ -179,16 +200,16 @@ if ($ApplyGlobalConfigs) {
 
     if (Test-Command npm) {
         Write-Log "Applying npm optimizations..." 'Info'
-        npm config set fetch-retries 5
-        npm config set fetch-retry-factor 2
-        npm config set prefer-offline true
+        Invoke-DryRunSafe { npm config set fetch-retries 5 } "npm config set fetch-retries 5"
+        Invoke-DryRunSafe { npm config set fetch-retry-factor 2 } "npm config set fetch-retry-factor 2"
+        Invoke-DryRunSafe { npm config set prefer-offline true } "npm config set prefer-offline true"
         Write-Log "npm config applied" 'Success'
     }
 
     if (Test-Command pip) {
         Write-Log "Applying pip optimizations..." 'Info'
-        pip config set global.retries 5
-        pip config set global.timeout 60
+        Invoke-DryRunSafe { pip config set global.retries 5 } "pip config set global.retries 5"
+        Invoke-DryRunSafe { pip config set global.timeout 60 } "pip config set global.timeout 60"
         Write-Log "pip config applied" 'Success'
     }
 } else {
@@ -210,8 +231,8 @@ foreach ($a in $agents) {
             $target = "$env:APPDATA\opencode\skill\fast-download"
             $source = "$repoRoot\opencode"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item "$source\*" $target -Recurse -Force
+                New-DirectorySafe -Path $target
+                Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
                 Write-Log "OpenCode skill deployed to $target" 'Success'
             }
         }
@@ -219,8 +240,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.claude\agents"
             $source = "$repoRoot\claude-code\fast-download.md"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "Claude Code agent deployed to $target" 'Success'
             }
         }
@@ -228,8 +249,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.codex\agents"
             $source = "$repoRoot\codex\fast-download.md"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "Codex agent deployed to $target" 'Success'
             }
         }
@@ -237,8 +258,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.continue\agents"
             $source = "$repoRoot\continue\fast-download.yaml"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "Continue agent deployed to $target" 'Success'
             }
         }
@@ -246,8 +267,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.cline\skills\fast-download"
             $source = "$repoRoot\cline\fast-download"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item "$source\*" $target -Recurse -Force
+                New-DirectorySafe -Path $target
+                Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
                 Write-Log "Cline skill deployed to $target" 'Success'
             }
         }
@@ -255,8 +276,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.vscode\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item "$source\*" $target -Recurse -Force
+                New-DirectorySafe -Path $target
+                Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
                 Write-Log "VS Code skill deployed to $target" 'Success'
             }
         }
@@ -264,8 +285,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.cursor\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item "$source\*" $target -Recurse -Force
+                New-DirectorySafe -Path $target
+                Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
                 Write-Log "Cursor skill deployed to $target" 'Success'
             }
         }
@@ -273,8 +294,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.windsurf\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item "$source\*" $target -Recurse -Force
+                New-DirectorySafe -Path $target
+                Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
                 Write-Log "Windsurf skill deployed to $target" 'Success'
             }
         }
@@ -282,8 +303,8 @@ foreach ($a in $agents) {
             $target = "$env:APPDATA\JetBrains\ai\agents"
             $source = "$repoRoot\jetbrains\fast-download.md"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "JetBrains AI agent deployed to $target" 'Success'
             }
         }
@@ -291,8 +312,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.aws\amazonq\agents"
             $source = "$repoRoot\amazon-q\fast-download.md"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "Amazon Q agent deployed to $target" 'Success'
             }
         }
@@ -300,8 +321,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.warp\agents"
             $source = "$repoRoot\warp\fast-download.yaml"
             if (Test-Path $source) {
-                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
-                Copy-Item $source $target -Force
+                New-DirectorySafe -Path $target
+                Copy-ItemSafe -Source $source -Destination $target
                 Write-Log "Warp agent deployed to $target" 'Success'
             }
         }
