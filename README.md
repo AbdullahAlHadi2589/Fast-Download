@@ -174,7 +174,7 @@ fd_init  # Apply git/npm/pip optimizations
 ### Smart Tool Selection
 ```
 ┌────────────────────────────────────────────────────────────┐
-│                    DOWNLOAD REQUEST                        │
+│                      DOWNLOAD REQUEST                      │
 └────────────────────────────────────────────────────────────┘
                                │
                                ▼
