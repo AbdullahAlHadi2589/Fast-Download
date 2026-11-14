@@ -81,6 +81,9 @@ irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/sc
 curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.sh | bash
 ```
 
+### Quick Agent Install
+**Easiest way:** Copy the one-liner above and paste it into your AI coding agent (OpenCode, Claude Code, Cursor, etc.) — it will handle the installation automatically.
+
 ### Manual
 1. Install aria2: `winget install aria2.aria2` / `brew install aria2` / `apt install aria2`
 2. Copy the agent config for your tool (see below)
@@ -355,7 +358,6 @@ MIT License — see [LICENSE](LICENSE) for details.
 
 - [aria2](https://aria2.github.io/) — The download accelerator that makes this possible
 - [Git](https://git-scm.com/) — Shallow clone optimization
-- All the AI agent platforms for extensibility
 - Contributors: [See GitHub](https://github.com/AbdullahAlHadi2589/Fast-Download/graphs/contributors)
 
 ---
