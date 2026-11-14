@@ -43,6 +43,40 @@ function Initialize-FastDownload {
     return $tools
 }
 
+# 10 MB threshold (in bytes) - below this, curl is more efficient due to aria2 overhead
+$global:FD_SMALL_FILE_THRESHOLD = 10485760
+
+# Internal: Check if server supports range requests
+function _Test-RangeSupport {
+    param([string]$Url)
+    try {
+        $response = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
+        if ($response.Headers.ContainsKey("Accept-Ranges") -and $response.Headers["Accept-Ranges"] -eq "bytes") {
+            return $true
+        }
+    } catch {
+        # If HEAD request fails, assume no range support
+    }
+    return $false
+}
+
+# Internal: Get content length from HEAD request
+function _Get-ContentLength {
+    param([string]$Url)
+    try {
+        $response = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
+        if ($response.Headers.ContainsKey("Content-Length")) {
+            $length = $response.Headers["Content-Length"]
+            if ($length -match '^\d+$') {
+                return [int64]$length
+            }
+        }
+    } catch {
+        # Ignore errors
+    }
+    return -1
+}
+
 # Internal: Smart download method selection
 function _Select-DownloadMethod {
     param(
@@ -79,17 +113,20 @@ function _Select-DownloadMethod {
     }
     
     # Check if server supports range requests
-    try {
-        $response = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
-        if ($response.Headers.ContainsKey("Accept-Ranges") -and $response.Headers["Accept-Ranges"] -eq "bytes") {
-            return "aria2"
-        }
-    } catch {
-        # If HEAD request fails, assume no range support
+    if (-not (_Test-RangeSupport -Url $Url)) {
+        # Server doesn't support range requests - aria2's multi-connection won't help
+        return "curl"
     }
     
-    # Server doesn't support range requests - aria2's multi-connection won't help
-    return "curl"
+    # Server supports ranges - check file size to decide between aria2 and curl
+    $contentLength = _Get-ContentLength -Url $Url
+    if ($contentLength -gt 0 -and $contentLength -lt $global:FD_SMALL_FILE_THRESHOLD) {
+        # File is smaller than threshold - curl is more efficient
+        return "curl"
+    }
+    
+    # Large file or unknown size with range support - use aria2
+    return "aria2"
 }
 
 # Download a file using aria2 (preferred) with curl fallback

@@ -68,6 +68,22 @@ _fd_server_supports_range() {
     [[ "$headers" =~ [Aa]ccept-[Rr]anges:\ *bytes ]]
 }
 
+_fd_get_content_length() {
+    local url="$1"
+    local tool
+    tool="$(_fd_detect_curl)" || return 1
+    # HEAD request to get Content-Length
+    local headers
+    headers=$(curl -sI --max-time 10 "$url" 2>/dev/null || true)
+    local length
+    length=$(echo "$headers" | grep -i '^content-length:' | sed 's/.*: *//' | tr -d '\r')
+    if [[ -n "$length" && "$length" =~ ^[0-9]+$ ]]; then
+        echo "$length"
+        return 0
+    fi
+    return 1
+}
+
 _fd_is_rate_limited() {
     local url="$1"
     # Known rate-limited domains (exclude raw file URLs like github.com/user/repo/raw/...)
@@ -79,6 +95,9 @@ _fd_is_rate_limited() {
 # ============================================================================
 # INTERNAL: Smart download method selection
 # ============================================================================
+# 10 MB threshold (in bytes) - below this, curl is more efficient due to aria2 overhead
+FD_SMALL_FILE_THRESHOLD="${FD_SMALL_FILE_THRESHOLD:-10485760}"
+
 _fd_select_download_method() {
     local url="$1"
     local force_curl="${2:-$FD_FORCE_CURL}"
@@ -103,22 +122,30 @@ _fd_select_download_method() {
         return 0
     fi
 
-    # For rate-limited servers, use curl or reduced aria2
+    # For rate-limited servers, use reduced aria2
     if _fd_is_rate_limited "$url"; then
         echo "aria2-limited"
         return 0
     fi
 
-    # For small files or unknown size, curl is more efficient (lower overhead)
-    # We can't easily determine file size without a HEAD request, which we already do for range support
     # Check if server supports range requests
-    if _fd_server_supports_range "$url"; then
-        echo "aria2"
+    if ! _fd_server_supports_range "$url"; then
+        # Server doesn't support range requests - aria2's multi-connection won't help
+        echo "curl"
         return 0
     fi
 
-    # Server doesn't support range requests - aria2's multi-connection won't help
-    echo "curl"
+    # Server supports ranges - check file size to decide between aria2 and curl
+    local content_length
+    content_length=$(_fd_get_content_length "$url") || true
+    if [[ -n "$content_length" && "$content_length" -lt "$FD_SMALL_FILE_THRESHOLD" ]]; then
+        # File is smaller than threshold - curl is more efficient
+        echo "curl"
+        return 0
+    fi
+
+    # Large file or unknown size with range support - use aria2
+    echo "aria2"
 }
 
 # ============================================================================

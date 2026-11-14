@@ -6,7 +6,7 @@
 .COPYRIGHT (c) 2026 fast-download contributors. All rights reserved.
 .TAGS fast-download, aria2, download, accelerator, git
 .LICENSEURI https://opensource.org/licenses/MIT
-.PROJECTURI https://github.com/yourusername/fast-download
+.PROJECTURI https://github.com/AbdullahAlHadi2589/Fast-Download
 .RELEASENOTES Initial release
 #>
 
@@ -14,8 +14,9 @@
 .SYNOPSIS
     Install fast-download universal download accelerator for all AI coding agents.
 .DESCRIPTION
-    Installs aria2, configures git/npm/pip, and deploys agent-specific configurations
-    for OpenCode, Claude Code, Codex, Continue, Cline, and VS Code.
+    Installs aria2, and deploys agent-specific configurations
+    for OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, and Warp.
+    Global Git/npm/pip configs are NOT modified by default. Use -ApplyGlobalConfigs to opt-in.
 .NOTES
     Requires: Windows 10/11, PowerShell 5.1+, Administrator for winget installs
 #>
@@ -24,11 +25,11 @@
 param(
     [switch]$Force,
     [switch]$SkipAria2,
-    [switch]$SkipGitConfig,
     [switch]$SkipNpmConfig,
     [switch]$SkipPipConfig,
+    [switch]$ApplyGlobalConfigs,
     [switch]$OnlyAgent,
-    [ValidateSet('opencode','claude-code','codex','continue','cline','vscode','all')]
+    [ValidateSet('opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp','all')]
     [string]$Agent = 'all',
     [string]$InstallDir = "$env:USERPROFILE\.fast-download"
 )
@@ -50,6 +51,26 @@ function Test-Command {
     Get-Command $Name -ErrorAction SilentlyContinue
 }
 
+function Find-Git {
+    # First try PATH
+    $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCmd) { return $gitCmd.Source }
+
+    # Common installation paths
+    $commonPaths = @(
+        "C:\Program Files\Git\bin\git.exe",
+        "C:\Program Files (x86)\Git\bin\git.exe",
+        "$env:LOCALAPPDATA\Programs\Git\bin\git.exe",
+        "$env:USERPROFILE\AppData\Local\Programs\Git\bin\git.exe",
+        "$env:ProgramFiles\Git\bin\git.exe"
+    )
+
+    foreach ($path in $commonPaths) {
+        if (Test-Path $path) { return $path }
+    }
+    return $null
+}
+
 # --- Main ---
 Write-Log "=== fast-download Installer ===" 'Info'
 Write-Log "Target: $InstallDir" 'Info'
@@ -58,22 +79,23 @@ Write-Log "Agent: $Agent" 'Info'
 # Check admin for winget
 $isAdmin = Test-Admin
 if (-not $isAdmin) {
-    Write-Log "Not running as Administrator. winget installs may fail." 'Warn'
+    Write-Log "Not running as Administrator. winget installs will be skipped." 'Warn'
 }
 
-# 1. Install aria2
+# 1. Install aria2 (if not skipped)
 if (-not $SkipAria2) {
-    Write-Log "Installing aria2..." 'Info'
-    if (Test-Command aria2c) {
-        Write-Log "aria2 already installed: $(aria2c --version | Select-Object -First 1)" 'Success'
+    Write-Log "Checking aria2..." 'Info'
+    $aria2Cmd = Test-Command aria2c
+    if ($aria2Cmd) {
+        Write-Log "aria2 found: $(& $aria2Cmd --version | Select-Object -First 1)" 'Success'
     } else {
+        Write-Log "aria2 not found. Installing..." 'Info'
         if ($isAdmin) {
             try {
                 winget install aria2.aria2 --accept-source-agreements --accept-package-agreements --silent
                 Write-Log "aria2 installed successfully" 'Success'
             } catch {
-                Write-Log "winget install failed: $_" 'Error'
-                Write-Log "Manual install: https://aria2.github.io/" 'Warn'
+                Write-Log "aria2 install failed: $_" 'Error'
             }
         } else {
             Write-Log "Run as Admin to auto-install aria2, or install manually: winget install aria2.aria2" 'Warn'
@@ -82,14 +104,17 @@ if (-not $SkipAria2) {
 }
 
 # 2. Install Git (if missing)
-if (Test-Command "C:\Program Files\Git\bin\git.exe") {
-    Write-Log "Git found: $(& "C:\Program Files\Git\bin\git.exe" --version)" 'Success'
+Write-Log "Checking Git..." 'Info'
+$gitExe = Find-Git
+if ($gitExe) {
+    Write-Log "Git found: $(& $gitExe --version)" 'Success'
 } else {
     Write-Log "Git not found. Installing..." 'Info'
     if ($isAdmin) {
         try {
             winget install Git.Git --accept-source-agreements --accept-package-agreements --silent
             Write-Log "Git installed successfully" 'Success'
+            $gitExe = Find-Git
         } catch {
             Write-Log "Git install failed: $_" 'Error'
         }
@@ -104,13 +129,27 @@ if (-not (Test-Path $InstallDir)) {
     Write-Log "Created $InstallDir" 'Info'
 }
 
-# 4. Copy universal shell library
+# 4. Copy universal shell libraries
 $repoRoot = "$PSScriptRoot\.."
 $srcLib = "$repoRoot\src\fast-download.sh"
 $dstLib = "$InstallDir\fast-download.sh"
 if (Test-Path $srcLib) {
     Copy-Item $srcLib $dstLib -Force
     Write-Log "Copied fast-download.sh to $InstallDir" 'Success'
+}
+
+$srcFish = "$repoRoot\src\fast-download.fish"
+$dstFish = "$InstallDir\fast-download.fish"
+if (Test-Path $srcFish) {
+    Copy-Item $srcFish $dstFish -Force
+    Write-Log "Copied fast-download.fish to $InstallDir" 'Success'
+}
+
+$srcNu = "$repoRoot\src\fast-download.nu"
+$dstNu = "$InstallDir\fast-download.nu"
+if (Test-Path $srcNu) {
+    Copy-Item $srcNu $dstNu -Force
+    Write-Log "Copied fast-download.nu (nushell) to $InstallDir" 'Success'
 }
 
 # 5. Copy PowerShell module
@@ -121,11 +160,12 @@ if (Test-Path $psModule) {
     Write-Log "Copied FastDownload.psm1 to $InstallDir" 'Success'
 }
 
-# 6. Apply global configs
-if (-not $SkipGitConfig) {
-    Write-Log "Applying Git optimizations..." 'Info'
-    $gitExe = "C:\Program Files\Git\bin\git.exe"
-    if (Test-Path $gitExe) {
+# 6. Apply global configs (OPT-IN ONLY with -ApplyGlobalConfigs)
+if ($ApplyGlobalConfigs) {
+    Write-Log "Applying global optimizations (opt-in)..." 'Info'
+    
+    if ($gitExe) {
+        Write-Log "Applying Git optimizations..." 'Info'
         & $gitExe config --global core.compression 9
         & $gitExe config --global core.preloadIndex true
         & $gitExe config --global core.fscache true
@@ -133,10 +173,10 @@ if (-not $SkipGitConfig) {
         & $gitExe config --global http.lowSpeedLimit 0
         & $gitExe config --global http.lowSpeedTime 999999
         Write-Log "Git config applied" 'Success'
+    } else {
+        Write-Log "Git not found, skipping Git config" 'Warn'
     }
-}
 
-if (-not $SkipNpmConfig) {
     if (Test-Command npm) {
         Write-Log "Applying npm optimizations..." 'Info'
         npm config set fetch-retries 5
@@ -144,23 +184,23 @@ if (-not $SkipNpmConfig) {
         npm config set prefer-offline true
         Write-Log "npm config applied" 'Success'
     }
-}
 
-if (-not $SkipPipConfig) {
     if (Test-Command pip) {
         Write-Log "Applying pip optimizations..." 'Info'
         pip config set global.retries 5
         pip config set global.timeout 60
         Write-Log "pip config applied" 'Success'
     }
+} else {
+    Write-Log "Skipping global configs (use -ApplyGlobalConfigs to enable)" 'Info'
 }
 
 # 7. Deploy agent configurations
 $agents = @()
 if ($Agent -eq 'all') {
-    $agents = 'opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp'
+    $agents = @('opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp')
 } else {
-    $agents = $Agent
+    $agents = @($Agent)
 }
 
 foreach ($a in $agents) {
@@ -170,36 +210,34 @@ foreach ($a in $agents) {
             $target = "$env:APPDATA\opencode\skill\fast-download"
             $source = "$repoRoot\opencode"
             if (Test-Path $source) {
-                Copy-Item $source $target -Recurse -Force
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
+                Copy-Item "$source\*" $target -Recurse -Force
                 Write-Log "OpenCode skill deployed to $target" 'Success'
             }
         }
         'claude-code' {
-            $target = "$env:USERPROFILE\.claude\agents\fast-download.md"
+            $target = "$env:USERPROFILE\.claude\agents"
             $source = "$repoRoot\claude-code\fast-download.md"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "Claude Code agent deployed to $target" 'Success'
             }
         }
         'codex' {
-            $target = "$env:USERPROFILE\.codex\agents\fast-download.md"
+            $target = "$env:USERPROFILE\.codex\agents"
             $source = "$repoRoot\codex\fast-download.md"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "Codex agent deployed to $target" 'Success'
             }
         }
         'continue' {
-            $target = "$env:USERPROFILE\.continue\agents\fast-download.yaml"
+            $target = "$env:USERPROFILE\.continue\agents"
             $source = "$repoRoot\continue\fast-download.yaml"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "Continue agent deployed to $target" 'Success'
             }
@@ -208,7 +246,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.cline\skills\fast-download"
             $source = "$repoRoot\cline\fast-download"
             if (Test-Path $source) {
-                Copy-Item $source $target -Recurse -Force
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
+                Copy-Item "$source\*" $target -Recurse -Force
                 Write-Log "Cline skill deployed to $target" 'Success'
             }
         }
@@ -216,7 +255,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.vscode\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                Copy-Item $source $target -Recurse -Force
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
+                Copy-Item "$source\*" $target -Recurse -Force
                 Write-Log "VS Code skill deployed to $target" 'Success'
             }
         }
@@ -224,7 +264,8 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.cursor\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                Copy-Item $source $target -Recurse -Force
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
+                Copy-Item "$source\*" $target -Recurse -Force
                 Write-Log "Cursor skill deployed to $target" 'Success'
             }
         }
@@ -232,36 +273,34 @@ foreach ($a in $agents) {
             $target = "$env:USERPROFILE\.windsurf\extensions\fast-download"
             $source = "$repoRoot\vscode\fast-download"
             if (Test-Path $source) {
-                Copy-Item $source $target -Recurse -Force
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
+                Copy-Item "$source\*" $target -Recurse -Force
                 Write-Log "Windsurf skill deployed to $target" 'Success'
             }
         }
         'jetbrains' {
-            $target = "$env:APPDATA\JetBrains\ai\agents\fast-download.md"
-            $source = "$repoRoot\claude-code\fast-download.md"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            $target = "$env:APPDATA\JetBrains\ai\agents"
+            $source = "$repoRoot\jetbrains\fast-download.md"
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "JetBrains AI agent deployed to $target" 'Success'
             }
         }
         'amazon-q' {
-            $target = "$env:USERPROFILE\.aws\amazonq\agents\fast-download.md"
-            $source = "$repoRoot\claude-code\fast-download.md"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            $target = "$env:USERPROFILE\.aws\amazonq\agents"
+            $source = "$repoRoot\amazon-q\fast-download.md"
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "Amazon Q agent deployed to $target" 'Success'
             }
         }
         'warp' {
-            $target = "$env:USERPROFILE\.warp\agents\fast-download.yaml"
-            $source = "$repoRoot\continue\fast-download.yaml"
-            $dir = Split-Path $target -Parent
-            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            $target = "$env:USERPROFILE\.warp\agents"
+            $source = "$repoRoot\warp\fast-download.yaml"
             if (Test-Path $source) {
+                if (-not (Test-Path $target)) { New-Item -ItemType Directory -Path $target -Force | Out-Null }
                 Copy-Item $source $target -Force
                 Write-Log "Warp agent deployed to $target" 'Success'
             }
@@ -269,49 +308,7 @@ foreach ($a in $agents) {
     }
 }
 
-# 8. Add to PATH (user scope)
-$installDirInPath = $false
-$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-if ($userPath -notlike "*$InstallDir*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$InstallDir", "User")
-    Write-Log "Added $InstallDir to user PATH" 'Success'
-    $installDirInPath = $true
-}
-
-# 9. Verify
-Write-Log "=== Verification ===" 'Info'
-$tools = @('aria2c', 'git', 'curl')
-foreach ($t in $tools) {
-    if (Test-Command $t) {
-        Write-Log "$t: Available" 'Success'
-    } else {
-        Write-Log "$t: NOT FOUND" 'Warn'
-    }
-}
-
-# 10. Final message
-Write-Log "" 'Info'
 Write-Log "=== Installation Complete ===" 'Success'
-Write-Log "" 'Info'
-Write-Log "Next steps:" 'Info'
-Write-Log "  1. RESTART YOUR TERMINAL / IDE to refresh PATH" 'Info'
-Write-Log "  2. Test: aria2c --version" 'Info'
-Write-Log "  3. Use in any terminal:" 'Info'
-Write-Log '     aria2c -x 16 -s 16 -o "file.zip" "https://url/file.zip"' 'Info'
-Write-Log '     git clone --depth 1 --filter=blob:none https://github.com/user/repo.git' 'Info'
-Write-Log "" 'Info'
-Write-Log "Shell libraries installed:" 'Info'
-Write-Log "  PowerShell: Import-Module $InstallDir\FastDownload.psm1" 'Info'
-Write-Log "  Bash/WSL:   source $InstallDir\fast-download.sh" 'Info'
-Write-Log "  Fish:       source $InstallDir\fast-download.fish" 'Info'
-Write-Log "  Nushell:    source $InstallDir\fast-download.nu" 'Info'
-Write-Log "" 'Info'
-Write-Log "Agent configs deployed:" 'Info'
-foreach ($a in $agents) {
-    Write-Log "  - $a" 'Info'
-}
-
-if ($installDirInPath) {
-    Write-Log "" 'Warn'
-    Write-Log "IMPORTANT: Restart your terminal/PowerShell/VS Code for PATH changes to take effect." 'Warn'
-}
+Write-Log "Installed to: $InstallDir" 'Info'
+Write-Log "Add to PATH: $InstallDir" 'Info'
+Write-Log "Usage: Import-Module FastDownload; Invoke-FastDownload -Url '...' -OutputPath '...'" 'Info'
