@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup
+        run: |
+          case "${{ runner.os }}" in
+            Linux)
+              sudo apt-get update && sudo apt-get install -y aria2 git curl
+              ;;
+            macOS)
+              brew install aria2 git curl
+              ;;
+            Windows)
+              choco install aria2 git curl --no-progress
+              ;;
+          esac
+
+      - name: Verify tools
+        run: |
+          aria2c --version | head -1
+          git --version
+          curl --version | head -1
+
+      - name: Test shell library syntax
+        run: bash -n src/fast-download.sh
+
+      - name: Test PowerShell module syntax
+        if: runner.os == 'Windows'
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Import-Module ./opencode/FastDownload.psm1 -Force
+          Initialize-FastDownload
+
+      - name: Test aria2 download (small file)
+        run: |
+          mkdir -p /tmp/fd-test
+          cd /tmp/fd-test
+          aria2c -x 4 -s 4 -k 1M --file-allocation=none --continue=true \
+            -o test.zip "https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip"
+          test -f test.zip && echo "Download OK"
+
+      - name: Test git shallow clone
+        run: |
+          cd /tmp/fd-test
+          git clone --depth 1 --single-branch --filter=blob:none https://github.com/git/git.git git-test
+          test -d git-test/.git && echo "Shallow clone OK"
+
+      - name: Test checksum verification
+        run: |
+          echo "test" > /tmp/fd-test/checksum-test.txt
+          expected=$(sha256sum /tmp/fd-test/checksum-test.txt | cut -d' ' -f1)
+          source src/fast-download.sh
+          fd_verify /tmp/fd-test/checksum-test.txt "$expected"
+
+      - name: Cleanup
+        if: always()
+        run: rm -rf /tmp/fd-test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: ShellCheck
+        run: |
+          sudo apt-get update && sudo apt-get install -y shellcheck
+          shellcheck src/fast-download.sh
+          shellcheck scripts/install.sh
+      - name: Check markdown
+        run: |
+          npm install -g markdownlint-cli
+          markdownlint README.md docs/*.md opencode/instructions.md
+
+  release:
+    name: Create Release
+    needs: [test, lint]
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release archive
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/}"
+          tar -czf "fast-download-${VERSION}.tar.gz" \
+            --exclude=.git \
+            --exclude=.github \
+            --exclude=scripts/install.ps1 \
+            .
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: fast-download-*.tar.gz

@@ -1,0 +1,7 @@
+{
+  "name": "fast-download",
+  "version": "1.0.0",
+  "description": "Optimized download accelerator for OpenCode using aria2, parallel connections, and smart fallbacks",
+  "author": "OpenCode User",
+  "license": "MIT"
+}

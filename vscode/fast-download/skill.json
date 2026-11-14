@@ -1,0 +1,13 @@
+{
+  "name": "fast-download",
+  "version": "1.0.0",
+  "description": "Universal download accelerator - aria2 (16 connections), Git shallow clones, checksum verification",
+  "publisher": "fast-download",
+  "license": "MIT",
+  "categories": ["Other"],
+  "keywords": ["download", "aria2", "git", "accelerator", "performance"],
+  "main": "instructions.md",
+  "scripts": {
+    "install": "node install.js"
+  }
+}

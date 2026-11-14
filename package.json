@@ -1,0 +1,66 @@
+{
+  "name": "@fast-download/cli",
+  "version": "1.0.0",
+  "description": "Universal download accelerator for AI coding agents - aria2, Git shallow clones, checksum verification",
+  "license": "MIT",
+  "author": "fast-download contributors",
+  "homepage": "https://github.com/yourusername/fast-download",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/fast-download.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/fast-download/issues"
+  },
+  "keywords": [
+    "download",
+    "accelerator",
+    "aria2",
+    "git",
+    "shallow-clone",
+    "checksum",
+    "ai-agent",
+    "opencode",
+    "claude-code",
+    "codex",
+    "continue",
+    "cline",
+    "vscode"
+  ],
+  "bin": {
+    "fast-download": "scripts/fast-download.js"
+  },
+  "files": [
+    "src/",
+    "scripts/",
+    "opencode/",
+    "claude-code/",
+    "codex/",
+    "continue/",
+    "cline/",
+    "vscode/",
+    "docs/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "install": "node scripts/install.js",
+    "uninstall": "node scripts/uninstall.js",
+    "test": "bash scripts/test.sh",
+    "lint": "shellcheck src/fast-download.sh scripts/install.sh && markdownlint README.md docs/*.md",
+    "prepare": "husky install",
+    "release": "standard-version"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "shellcheck": "^1.0.0",
+    "markdownlint-cli": "^0.38.0",
+    "husky": "^8.0.0",
+    "standard-version": "^9.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": ["win32", "linux", "darwin"],
+  "preferGlobal": true
+}

@@ -1,0 +1,8 @@
+{
+  "name": "fast-download",
+  "version": "1.0.0",
+  "description": "Universal download accelerator - aria2 (16 connections), Git shallow clones, checksum verification, smart fallbacks",
+  "author": "fast-download contributors",
+  "license": "MIT",
+  "entry": "instructions.md"
+}
