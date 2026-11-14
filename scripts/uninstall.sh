@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # fast-download uninstaller for Linux/macOS/WSL
-# Usage: curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/uninstall.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/uninstall.sh | bash
 
 set -euo pipefail
 

@@ -7,10 +7,31 @@ function Initialize-FastDownload {
     $userPath = [System.Environment]::GetEnvironmentVariable("Path","User")
     $env:Path = "$machinePath;$userPath"
     
+    # Detect Git using Get-Command first (checks PATH)
+    $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+    
+    # If not in PATH, check common installation locations
+    if (-not $gitCmd) {
+        $commonPaths = @(
+            "C:\Program Files\Git\bin\git.exe",
+            "C:\Program Files (x86)\Git\bin\git.exe",
+            "$env:LOCALAPPDATA\Programs\Git\bin\git.exe",
+            "$env:USERPROFILE\AppData\Local\Programs\Git\bin\git.exe",
+            "$env:ProgramFiles\Git\bin\git.exe"
+        )
+        
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) {
+                $gitCmd = Get-Command $path -ErrorAction SilentlyContinue
+                if ($gitCmd) { break }
+            }
+        }
+    }
+    
     # Verify tools are available
     $tools = @{
         aria2c = Get-Command aria2c -ErrorAction SilentlyContinue
-        git = Get-Command "C:\Program Files\Git\bin\git.exe" -ErrorAction SilentlyContinue
+        git = $gitCmd
         curl = Get-Command curl.exe -ErrorAction SilentlyContinue
     }
     
@@ -20,6 +41,55 @@ function Initialize-FastDownload {
     }
     
     return $tools
+}
+
+# Internal: Smart download method selection
+function _Select-DownloadMethod {
+    param(
+        [string]$Url,
+        [switch]$ForceCurl
+    )
+    
+    # Git URLs are handled separately (match actual repo URLs, not file downloads)
+    # Matches: https://github.com/user/repo, https://github.com/user/repo/, https://github.com/user/repo.git, git@...
+    # Does NOT match: https://github.com/user/repo/file.zip, https://github.com/user/repo/releases/..., etc.
+    if ($Url -match '^https?://github\.com/[^/]+/[^/]+\.git$' -or 
+        ($Url -match '^https?://github\.com/[^/]+/[^/]+/?$' -and -not $Url -match '\.[a-zA-Z0-9]+$') -or
+        $Url -match '^git@' -or
+        $Url -match '\.git$') {
+        return "git"
+    }
+    
+    # Force curl if requested
+    if ($ForceCurl) {
+        return "curl"
+    }
+    
+    # Check for aria2 availability
+    $aria2c = Get-Command aria2c -ErrorAction SilentlyContinue
+    if (-not $aria2c) {
+        return "curl"
+    }
+    
+    # Known rate-limited domains (exclude raw file URLs like github.com/user/repo/raw/...)
+    if ($Url -match 'proof\.ovh\.net' -or 
+        ($Url -match 'github\.com' -and -not $Url -match 'github\.com/[^/]+/[^/]+/(raw|releases|archive)') -or 
+        $Url -match 'release-assets\.githubusercontent\.com') {
+        return "aria2-limited"
+    }
+    
+    # Check if server supports range requests
+    try {
+        $response = Invoke-WebRequest -Uri $Url -Method Head -UseBasicParsing -TimeoutSec 10 -ErrorAction SilentlyContinue
+        if ($response.Headers.ContainsKey("Accept-Ranges") -and $response.Headers["Accept-Ranges"] -eq "bytes") {
+            return "aria2"
+        }
+    } catch {
+        # If HEAD request fails, assume no range support
+    }
+    
+    # Server doesn't support range requests - aria2's multi-connection won't help
+    return "curl"
 }
 
 # Download a file using aria2 (preferred) with curl fallback
@@ -48,13 +118,22 @@ function Invoke-FastDownload {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
     
-    # Try aria2 first (unless forced to use curl)
-    if (-not $ForceCurl -and (Get-Command aria2c -ErrorAction SilentlyContinue)) {
-        Write-Host "Downloading with aria2 (connections: $MaxConnections)..." -ForegroundColor Cyan
+    # Smart method selection
+    $method = _Select-DownloadMethod -Url $Url -ForceCurl:$ForceCurl
+    $downloadSucceeded = $false
+    
+    # Try aria2 first (for aria2 and aria2-limited methods)
+    if (($method -eq "aria2" -or $method -eq "aria2-limited") -and (Get-Command aria2c -ErrorAction SilentlyContinue)) {
+        $connections = $MaxConnections
+        if ($method -eq "aria2-limited") {
+            $connections = 4
+        }
+        
+        Write-Host "Downloading with aria2 (connections: $connections, method: $method)..." -ForegroundColor Cyan
         
         $args = @(
-            "-x", $MaxConnections,
-            "-s", $MaxConnections,
+            "-x", $connections,
+            "-s", $connections,
             "-k", "1M",
             "--file-allocation=falloc",
             "--continue=true",
@@ -77,37 +156,62 @@ function Invoke-FastDownload {
         
         if ($LASTEXITCODE -eq 0) {
             Write-Host "Download completed in $($elapsed.TotalSeconds.ToString('F1'))s" -ForegroundColor Green
-            return $true
+            $downloadSucceeded = $true
+        } else {
+            Write-Warning "aria2 failed (exit code $LASTEXITCODE), falling back to curl..."
         }
-        
-        Write-Warning "aria2 failed (exit code $LASTEXITCODE), falling back to curl..."
     }
     
     # Fallback to curl
-    Write-Host "Downloading with curl..." -ForegroundColor Yellow
-    
-    $curlArgs = @(
-        "-L",                    # Follow redirects
-        "-C", "-",               # Resume if possible
-        "-o", $OutputPath,
-        "--retry", "5",
-        "--retry-delay", "3",
-        "--fail",                # Fail on HTTP errors
-        "-#",                    # Progress bar
-        $Url
-    )
-    
-    $startTime = Get-Date
-    $result = & curl.exe @curlArgs 2>&1
-    $elapsed = (Get-Date) - $startTime
-    
-    if ($LASTEXITCODE -eq 0) {
-        Write-Host "Download completed in $($elapsed.TotalSeconds.ToString('F1'))s" -ForegroundColor Green
-        return $true
+    if (-not $downloadSucceeded) {
+        Write-Host "Downloading with curl..." -ForegroundColor Yellow
+        
+        $curlArgs = @(
+            "-L",                    # Follow redirects
+            "-o", $OutputPath,
+            "--retry", "5",
+            "--retry-delay", "3",
+            "--fail",                # Fail on HTTP errors
+            "-#",                    # Progress bar
+            $Url
+        )
+        
+        # Use resume (-C -) only if not forcing curl (ForceCurl skips aria2 and often means no-range servers)
+        if (-not $ForceCurl) {
+            $curlArgs = @("-C", "-") + $curlArgs
+        }
+        
+        $startTime = Get-Date
+        $result = & curl.exe @curlArgs 2>&1
+        $elapsed = (Get-Date) - $startTime
+        
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Download completed in $($elapsed.TotalSeconds.ToString('F1'))s" -ForegroundColor Green
+            $downloadSucceeded = $true
+        }
     }
     
-    Write-Error "Download failed with both aria2 and curl"
-    return $false
+    # Verify checksum after ANY successful download
+    if ($downloadSucceeded -and $ExpectedChecksum) {
+        Write-Host "Verifying checksum..." -ForegroundColor Cyan
+        $actualHash = (Get-FileHash -Path $OutputPath -Algorithm SHA256).Hash.ToLower()
+        $expectedHash = $ExpectedChecksum.ToLower()
+        
+        if ($actualHash -eq $expectedHash) {
+            Write-Host "Checksum verified (SHA256)" -ForegroundColor Green
+        } else {
+            Write-Error "Checksum mismatch!`nExpected: $expectedHash`nActual:   $actualHash"
+            Remove-Item $OutputPath -Force -ErrorAction SilentlyContinue
+            return $false
+        }
+    }
+    
+    if ($downloadSucceeded) {
+        return $true
+    } else {
+        Write-Error "Download failed with both aria2 and curl"
+        return $false
+    }
 }
 
 # Clone a Git repository with optional shallow clone
@@ -127,9 +231,28 @@ function Invoke-GitClone {
     
     Initialize-FastDownload | Out-Null
     
-    $gitPath = "C:\Program Files\Git\bin\git.exe"
-    if (-not (Test-Path $gitPath)) {
-        throw "Git not found at $gitPath"
+    $gitPath = Get-Command git -ErrorAction SilentlyContinue
+    
+    # If not in PATH, check common installation locations
+    if (-not $gitPath) {
+        $commonPaths = @(
+            "C:\Program Files\Git\bin\git.exe",
+            "C:\Program Files (x86)\Git\bin\git.exe",
+            "$env:LOCALAPPDATA\Programs\Git\bin\git.exe",
+            "$env:USERPROFILE\AppData\Local\Programs\Git\bin\git.exe",
+            "$env:ProgramFiles\Git\bin\git.exe"
+        )
+        
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) {
+                $gitPath = $path
+                break
+            }
+        }
+    }
+    
+    if (-not $gitPath) {
+        throw "Git not found. Please ensure Git is installed and in PATH."
     }
     
     $args = @("clone")

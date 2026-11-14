@@ -12,6 +12,8 @@ $env.FD_ARIA2_MIN_SPLIT_SIZE = "1M"
 $env.FD_CURL_RETRIES = 5
 $env.FD_CURL_RETRY_DELAY = 3
 $env.FD_GIT_SHALLOW = true
+# When set to true, skip aria2 and use curl directly (for rate-limited servers)
+$env.FD_FORCE_CURL = false
 
 # ============================================================================
 # INTERNAL: Tool detection
@@ -36,7 +38,10 @@ def _fd_detect_git [] {
 # INTERNAL: URL classification
 # ============================================================================
 def _fd_is_git_url [$url] {
-    ($url | str contains "github.com/") or ($url | str ends-with ".git") or ($url | str starts-with "git@")
+    ($url | str match "^https?://github\.com/[^/]+/[^/]+\.git$") or
+    (($url | str match "^https?://github\.com/[^/]+/[^/]+/?$") and (not ($url | str match "\.[a-zA-Z0-9]+$"))) or
+    ($url | str starts-with "git@") or
+    ($url | str ends-with ".git")
 }
 
 def _fd_server_supports_range [$url] {
@@ -50,7 +55,43 @@ def _fd_server_supports_range [$url] {
 }
 
 def _fd_is_rate_limited [$url] {
-    ($url | str contains "proof.ovh.net") or ($url | str contains "github.com") or ($url | str contains "release-assets.githubusercontent.com")
+    ($url | str contains "proof.ovh.net") or 
+    (($url | str contains "github.com") and (not ($url | str match "github\.com/[^/]+/[^/]+/(raw|releases|archive)"))) or
+    ($url | str contains "release-assets.githubusercontent.com")
+}
+
+# ============================================================================
+# INTERNAL: Smart download method selection
+# ============================================================================
+def _fd_select_download_method [$url, $force_curl: $env.FD_FORCE_CURL] {
+    # Git URLs are handled separately
+    if (_fd_is_git_url $url) {
+        return "git"
+    }
+
+    # Force curl if requested
+    if ($force_curl == true) {
+        return "curl"
+    }
+
+    # Check for aria2 availability
+    let aria2_cmd = (_fd_detect_aria2)
+    if ($aria2_cmd == "") {
+        return "curl"
+    }
+
+    # For rate-limited servers, use curl or reduced aria2
+    if (_fd_is_rate_limited $url) {
+        return "aria2-limited"
+    }
+
+    # Check if server supports range requests
+    if (_fd_server_supports_range $url) {
+        return "aria2"
+    }
+
+    # Server doesn't support range requests - aria2's multi-connection won't help
+    return "curl"
 }
 
 # ============================================================================
@@ -66,25 +107,29 @@ def fd_download [$url, $output, $expected_checksum: "", $force_curl: false] {
     let output_dir = ($output | path dirname)
     ^mkdir -p $output_dir
 
-    let aria2_cmd = (_fd_detect_aria2)
-
     # Git URL? Delegate to git clone
     if (_fd_is_git_url $url) {
         return (fd_git_clone $url $output)
     }
 
-    # Try aria2 first (unless forced to curl)
-    if ($force_curl == false and $aria2_cmd != "") {
+    let method = (_fd_select_download_method $url $force_curl)
+    let aria2_cmd = (_fd_detect_aria2)
+
+    # Track if download succeeded
+    let download_succeeded = false
+
+    # Try aria2 first (for aria2 and aria2-limited methods)
+    if (($method == "aria2" or $method == "aria2-limited") and $aria2_cmd != "") {
         let connections = $env.FD_ARIA2_CONNECTIONS
         let split = $env.FD_ARIA2_SPLIT
 
         # Reduce connections for known rate-limited servers
-        if (_fd_is_rate_limited $url) {
+        if ($method == "aria2-limited") {
             $connections = 4
             $split = 4
         }
 
-        print "Downloading with aria2 (connections: $connections)..."
+        print $"Downloading with aria2 (connections: ($connections), method: ($method))..."
 
         let aria2_args = [
             "-x" $connections
@@ -108,39 +153,60 @@ def fd_download [$url, $output, $expected_checksum: "", $force_curl: false] {
 
         if (^$aria2_cmd ...$aria2_args 2>&1) {
             print "Download completed"
-            return true
+            $download_succeeded = true
+        } else {
+            print "aria2 failed, falling back to curl..."
         }
-
-        print "aria2 failed, falling back to curl..."
     }
 
     # Fallback to curl
-    let curl_cmd = (_fd_detect_curl)
-    if ($curl_cmd == "") {
-        print "No curl or aria2 available"
+    if ($download_succeeded == false) {
+        let curl_cmd = (_fd_detect_curl)
+        if ($curl_cmd == "") {
+            print "No curl or aria2 available"
+            return false
+        }
+
+        print "Downloading with curl..."
+
+        let curl_args = [
+            "-L"
+            "-o" $output
+            "--retry" $env.FD_CURL_RETRIES
+            "--retry-delay" $env.FD_CURL_RETRY_DELAY
+            "--fail"
+            "-#"
+            $url
+        ]
+
+        # Use resume (-C -) only if not forcing curl (force_curl skips aria2 and often means no-range servers)
+        if ($force_curl == false) {
+            $curl_args = (["-C" "-"] ++ $curl_args)
+        }
+
+        if (^$curl_cmd ...$curl_args 2>&1) {
+            print "Download completed"
+            $download_succeeded = true
+        }
+    }
+
+    # Verify checksum after ANY successful download
+    if ($download_succeeded == true and $expected_checksum != "") {
+        print "Verifying checksum..."
+        if (not (fd_verify $output $expected_checksum)) {
+            print "Checksum verification failed! Removing invalid file."
+            ^rm -f $output
+            return false
+        }
+        print "Checksum verified"
+    }
+
+    if ($download_succeeded == true) {
+        return true
+    } else {
+        print "Download failed with both aria2 and curl"
         return false
     }
-
-    print "Downloading with curl..."
-
-    let curl_args = [
-        "-L"
-        "-C" "-"
-        "-o" $output
-        "--retry" $env.FD_CURL_RETRIES
-        "--retry-delay" $env.FD_CURL_RETRY_DELAY
-        "--fail"
-        "-#"
-        $url
-    ]
-
-    if (^$curl_cmd ...$curl_args 2>&1) {
-        print "Download completed"
-        return true
-    }
-
-    print "Download failed with both aria2 and curl"
-    return false
 }
 
 # ============================================================================
@@ -269,8 +335,11 @@ def fd_speed_test [$test_url: "https://proof.ovh.net/files/100Mb.dat", $test_siz
 }
 
 # ============================================================================
-# INIT: Apply optimized configs
+# INIT: Apply optimized configs (EXPLICITLY OPT-IN)
 # ============================================================================
+# This function modifies global git/npm/pip configuration.
+# It MUST be called explicitly by the user. It does NOT run automatically on source.
+# Usage: fd_init
 def fd_init [] {
     let git_cmd = (_fd_detect_git)
     if ($git_cmd == "") { return }
@@ -296,8 +365,9 @@ def fd_init [] {
         ^pip config set global.timeout 60 2>/dev/null; or true
     }
 
-    print "fast-download initialized"
+    print "fast-download initialized (git/npm/pip configs applied)"
 }
 
-# Auto-init
-fd_init
+# NOTE: Auto-init on source has been REMOVED.
+# Users must explicitly call `fd_init` to apply git/npm/pip optimizations.
+# This prevents unexpected global configuration changes.

@@ -83,12 +83,12 @@ jobs:
             
             **Windows (PowerShell):**
             ```powershell
-            irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex
+            irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1 | iex
             ```
             
             **Linux/macOS/WSL (Bash):**
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.sh | bash
             ```
             
             ### What's Included

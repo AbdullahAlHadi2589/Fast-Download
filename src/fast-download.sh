@@ -3,8 +3,6 @@
 # Source this file: source fast-download.sh
 # Then use: fd_download "url" "output" [checksum]
 
-set -euo pipefail
-
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
@@ -14,6 +12,8 @@ FD_ARIA2_MIN_SPLIT_SIZE="${FD_ARIA2_MIN_SPLIT_SIZE:-1M}"
 FD_CURL_RETRIES="${FD_CURL_RETRIES:-5}"
 FD_CURL_RETRY_DELAY="${FD_CURL_RETRY_DELAY:-3}"
 FD_GIT_SHALLOW="${FD_GIT_SHALLOW:-true}"
+# When set to "true", skip aria2 and use curl directly (for rate-limited servers)
+FD_FORCE_CURL="${FD_FORCE_CURL:-false}"
 
 # ============================================================================
 # INTERNAL: Tool detection
@@ -49,30 +49,76 @@ _fd_detect_git() {
 # ============================================================================
 _fd_is_git_url() {
     local url="$1"
-    # Match actual Git repository URLs, not release assets
-    [[ "$url" =~ ^https?://github\.com/[^/]+/[^/]+/?$ ]] || \
+    # Match actual Git repository URLs, not release assets or file downloads
+    # Matches: https://github.com/user/repo, https://github.com/user/repo/, https://github.com/user/repo.git, git@...
+    # Does NOT match: https://github.com/user/repo/file.zip, https://github.com/user/repo/releases/..., etc.
     [[ "$url" =~ ^https?://github\.com/[^/]+/[^/]+\.git$ ]] || \
+    [[ "$url" =~ ^https?://github\.com/[^/]+/[^/][^/]*/?$ && ! "$url" =~ \.[a-zA-Z0-9]+$ ]] || \
     [[ "$url" =~ ^git@ ]] || \
     [[ "$url" =~ \.git$ ]]
 }
 
 _fd_server_supports_range() {
     local url="$1"
-    local tool="$(_fd_detect_curl)"
-    if [[ -n "$tool" ]]; then
-        # HEAD request to check Accept-Ranges
-        local headers
-        headers=$(curl -sI --max-time 10 "$url" 2>/dev/null || true)
-        [[ "$headers" =~ [Aa]ccept-[Rr]anges:\ *bytes ]]
-    else
-        return 1
-    fi
+    local tool
+    tool="$(_fd_detect_curl)" || return 1
+    # HEAD request to check Accept-Ranges
+    local headers
+    headers=$(curl -sI --max-time 10 "$url" 2>/dev/null || true)
+    [[ "$headers" =~ [Aa]ccept-[Rr]anges:\ *bytes ]]
 }
 
 _fd_is_rate_limited() {
     local url="$1"
-    # Known rate-limited domains
-    [[ "$url" =~ proof\.ovh\.net ]] || [[ "$url" =~ github\.com ]] || [[ "$url" =~ release-assets\.githubusercontent\.com ]]
+    # Known rate-limited domains (exclude raw file URLs like github.com/user/repo/raw/...)
+    [[ "$url" =~ proof\.ovh\.net ]] || \
+    ([[ "$url" =~ github\.com ]] && ! [[ "$url" =~ github\.com/[^/]+/[^/]+/(raw|releases|archive) ]]) || \
+    [[ "$url" =~ release-assets\.githubusercontent\.com ]]
+}
+
+# ============================================================================
+# INTERNAL: Smart download method selection
+# ============================================================================
+_fd_select_download_method() {
+    local url="$1"
+    local force_curl="${2:-$FD_FORCE_CURL}"
+
+    # Git URLs are handled separately
+    if _fd_is_git_url "$url"; then
+        echo "git"
+        return 0
+    fi
+
+    # Force curl if requested
+    if [[ "$force_curl" == "true" ]]; then
+        echo "curl"
+        return 0
+    fi
+
+    # Check for aria2 availability
+    local aria2_cmd
+    aria2_cmd=$(_fd_detect_aria2) || true
+    if [[ -z "$aria2_cmd" ]]; then
+        echo "curl"
+        return 0
+    fi
+
+    # For rate-limited servers, use curl or reduced aria2
+    if _fd_is_rate_limited "$url"; then
+        echo "aria2-limited"
+        return 0
+    fi
+
+    # For small files or unknown size, curl is more efficient (lower overhead)
+    # We can't easily determine file size without a HEAD request, which we already do for range support
+    # Check if server supports range requests
+    if _fd_server_supports_range "$url"; then
+        echo "aria2"
+        return 0
+    fi
+
+    # Server doesn't support range requests - aria2's multi-connection won't help
+    echo "curl"
 }
 
 # ============================================================================
@@ -94,27 +140,32 @@ fd_download() {
     output_dir=$(dirname "$output")
     mkdir -p "$output_dir"
 
-    local aria2_cmd
-    aria2_cmd=$(_fd_detect_aria2) || true
-
     # Git URL? Delegate to git clone
     if _fd_is_git_url "$url"; then
         fd_git_clone "$url" "$output"
         return $?
     fi
 
-    # Try aria2 first (unless forced to curl)
-    if [[ "$force_curl" != "true" && -n "$aria2_cmd" ]]; then
+    local method
+    method=$(_fd_select_download_method "$url" "$force_curl")
+    local aria2_cmd
+    aria2_cmd=$(_fd_detect_aria2) || true
+
+    # Track if download succeeded
+    local download_succeeded=false
+
+    # Try aria2 first (for aria2 and aria2-limited methods)
+    if [[ "$method" == "aria2" || "$method" == "aria2-limited" ]] && [[ -n "$aria2_cmd" ]]; then
         local connections="$FD_ARIA2_CONNECTIONS"
         local split="$FD_ARIA2_SPLIT"
 
         # Reduce connections for known rate-limited servers
-        if _fd_is_rate_limited "$url"; then
+        if [[ "$method" == "aria2-limited" ]]; then
             connections=4
             split=4
         fi
 
-        echo "Downloading with aria2 (connections: $connections)..." >&2
+        echo "Downloading with aria2 (connections: $connections, method: $method)..." >&2
 
         local aria2_args=(
             -x "$connections"
@@ -138,36 +189,57 @@ fd_download() {
 
         if "$aria2_cmd" "${aria2_args[@]}" 2>&1; then
             echo "Download completed" >&2
-            return 0
+            download_succeeded=true
+        else
+            echo "aria2 failed, falling back to curl..." >&2
         fi
-
-        echo "aria2 failed, falling back to curl..." >&2
     fi
 
     # Fallback to curl
-    local curl_cmd
-    curl_cmd=$(_fd_detect_curl) || { echo "No curl or aria2 available" >&2; return 1; }
+    if [[ "$download_succeeded" != "true" ]]; then
+        local curl_cmd
+        curl_cmd=$(_fd_detect_curl) || { echo "No curl or aria2 available" >&2; return 1; }
 
-    echo "Downloading with curl..." >&2
+        echo "Downloading with curl..." >&2
 
-    local curl_args=(
-        -L                    # Follow redirects
-        -C -                  # Resume
-        -o "$output"
-        --retry "$FD_CURL_RETRIES"
-        --retry-delay "$FD_CURL_RETRY_DELAY"
-        --fail                # Fail on HTTP errors
-        -#                    # Progress bar
-        "$url"
-    )
+        local curl_args=(
+            -L                    # Follow redirects
+            -o "$output"
+            --retry "$FD_CURL_RETRIES"
+            --retry-delay "$FD_CURL_RETRY_DELAY"
+            --fail                # Fail on HTTP errors
+            -#                    # Progress bar
+            "$url"
+        )
 
-    if "$curl_cmd" "${curl_args[@]}" 2>&1; then
-        echo "Download completed" >&2
-        return 0
+        # Use resume (-C -) only if not forcing curl (force_curl skips aria2 and often means no-range servers)
+        if [[ "$force_curl" != "true" ]]; then
+            curl_args=(-C - "${curl_args[@]}")
+        fi
+
+        if "$curl_cmd" "${curl_args[@]}" 2>&1; then
+            echo "Download completed" >&2
+            download_succeeded=true
+        fi
     fi
 
-    echo "Download failed with both aria2 and curl" >&2
-    return 1
+    # Verify checksum after ANY successful download
+    if [[ "$download_succeeded" == "true" && -n "$expected_checksum" ]]; then
+        echo "Verifying checksum..." >&2
+        if ! fd_verify "$output" "$expected_checksum"; then
+            echo "Checksum verification failed! Removing invalid file." >&2
+            rm -f "$output"
+            return 1
+        fi
+        echo "Checksum verified" >&2
+    fi
+
+    if [[ "$download_succeeded" == "true" ]]; then
+        return 0
+    else
+        echo "Download failed with both aria2 and curl" >&2
+        return 1
+    fi
 }
 
 # ============================================================================
@@ -327,8 +399,11 @@ fd_speed_test() {
 }
 
 # ============================================================================
-# INIT: Apply optimized configs
+# INIT: Apply optimized configs (EXPLICITLY OPT-IN)
 # ============================================================================
+# This function modifies global git/npm/pip configuration.
+# It MUST be called explicitly by the user. It does NOT run automatically on source.
+# Usage: fd_init
 fd_init() {
     local git_cmd
     git_cmd=$(_fd_detect_git) || return 0
@@ -354,7 +429,7 @@ fd_init() {
         pip config set global.timeout 60 2>/dev/null || true
     fi
 
-    echo "fast-download initialized" >&2
+    echo "fast-download initialized (git/npm/pip configs applied)" >&2
 }
 
 # ============================================================================
@@ -373,7 +448,6 @@ fi
 # ============================================================================
 export -f fd_download fd_git_clone fd_verify fd_speed_test fd_init
 
-# Auto-init if sourced (not executed)
-if [[ "${BASH_SOURCE[0]}" != "${0}" ]]; then
-    fd_init
-fi
+# NOTE: Auto-init on source has been REMOVED.
+# Users must explicitly call `fd_init` to apply git/npm/pip optimizations.
+# This prevents unexpected global configuration changes.

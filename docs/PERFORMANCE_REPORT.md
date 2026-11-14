@@ -225,7 +225,7 @@ git clone --depth 1 --single-branch --filter=blob:none https://github.com/user/r
 git clone https://github.com/user/repo.git
 
 # Specific branch, shallow
-git clone --depth 1 --branch main https://github.com/user/repo.git
+git clone --depth 1 --branch master https://github.com/user/repo.git
 ```
 
 #### 3. PowerShell Module (Advanced)
