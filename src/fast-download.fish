@@ -68,6 +68,20 @@ function _fd_server_supports_range
     end
 end
 
+function _fd_get_content_length
+    set url $argv[1]
+    set tool (_fd_detect_curl)
+    if test -n "$tool"
+        set headers (curl -sI --max-time 10 $url 2>/dev/null)
+        set length (echo "$headers" | grep -i '^content-length:' | sed 's/.*: *//' | tr -d '\r')
+        if test -n "$length" -a "$length" -eq "$length" 2>/dev/null
+            echo "$length"
+            return 0
+        end
+    end
+    return 1
+end
+
 function _fd_is_rate_limited
     set url $argv[1]
     string match -r 'proof\.ovh\.net' $url >/dev/null; or \
@@ -78,6 +92,9 @@ end
 # ============================================================================
 # INTERNAL: Smart download method selection
 # ============================================================================
+# 10 MB threshold (in bytes) - below this, curl is more efficient due to aria2 overhead
+set -g FD_SMALL_FILE_THRESHOLD 10485760
+
 function _fd_select_download_method
     set url $argv[1]
     set force_curl $argv[2]
@@ -105,20 +122,29 @@ function _fd_select_download_method
         return 0
     end
 
-    # For rate-limited servers, use curl or reduced aria2
+    # For rate-limited servers, use reduced aria2
     if _fd_is_rate_limited $url
         echo aria2-limited
         return 0
     end
 
     # Check if server supports range requests
-    if _fd_server_supports_range $url
-        echo aria2
+    if not _fd_server_supports_range $url
+        # Server doesn't support range requests - aria2's multi-connection won't help
+        echo curl
         return 0
     end
 
-    # Server doesn't support range requests - aria2's multi-connection won't help
-    echo curl
+    # Server supports ranges - check file size to decide between aria2 and curl
+    set content_length (_fd_get_content_length $url)
+    if test -n "$content_length" -a "$content_length" -lt $FD_SMALL_FILE_THRESHOLD
+        # File is smaller than threshold - curl is more efficient
+        echo curl
+        return 0
+    end
+
+    # Large file or unknown size with range support - use aria2
+    echo aria2
 end
 
 # ============================================================================

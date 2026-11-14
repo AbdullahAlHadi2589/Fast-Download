@@ -22,9 +22,9 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AGENT="${1:-all}"
 FORCE="${FORCE:-false}"
 SKIP_ARIA2="${SKIP_ARIA2:-false}"
-SKIP_GIT_CONFIG="${SKIP_GIT_CONFIG:-false}"
 SKIP_NPM_CONFIG="${SKIP_NPM_CONFIG:-false}"
 SKIP_PIP_CONFIG="${SKIP_PIP_CONFIG:-false}"
+APPLY_GLOBAL_CONFIGS="${APPLY_GLOBAL_CONFIGS:-false}"
 
 # Detect OS
 OS="$(uname -s)"
@@ -45,10 +45,11 @@ has_cmd() { command -v "$1" >/dev/null 2>&1; }
 
 # --- 1. Install aria2 ---
 if [[ "$SKIP_ARIA2" != "true" ]]; then
-    log "Installing aria2..."
+    log "Checking aria2..."
     if has_cmd aria2c; then
         log_success "aria2 already installed: $(aria2c --version | head -1)"
     else
+        log "aria2 not found. Installing..."
         case "$PLATFORM" in
             macos)
                 if has_cmd brew; then
@@ -82,31 +83,54 @@ if [[ "$SKIP_ARIA2" != "true" ]]; then
     fi
 fi
 
-# --- 2. Install Git ---
+# --- 2. Install Git (if missing) ---
+log "Checking Git..."
 if has_cmd git; then
-    log_success "Git found: $(git --version)"
+    log_success "Git already installed: $(git --version)"
 else
-    log "Installing Git..."
+    log "Git not found. Installing..."
     case "$PLATFORM" in
         macos)
-            if has_cmd brew; then brew install git; log_success "Git installed"; fi
+            if has_cmd brew; then
+                brew install git
+                log_success "Git installed via Homebrew"
+            else
+                log_error "Homebrew not found. Install from https://brew.sh/"
+            fi
             ;;
         linux)
-            if has_cmd apt; then sudo apt install -y git; log_success "Git installed"; fi
+            if has_cmd apt; then
+                sudo apt update && sudo apt install -y git
+                log_success "Git installed via apt"
+            elif has_cmd dnf; then
+                sudo dnf install -y git
+                log_success "Git installed via dnf"
+            elif has_cmd pacman; then
+                sudo pacman -S --noconfirm git
+                log_success "Git installed via pacman"
+            elif has_cmd zypper; then
+                sudo zypper install -y git
+                log_success "Git installed via zypper"
+            else
+                log_error "No supported package manager found. Install Git manually."
+            fi
+            ;;
+        windows)
+            log_warn "On Windows, run install.ps1 instead"
             ;;
     esac
 fi
 
 # --- 3. Create install directory ---
-mkdir -p "$INSTALL_DIR"
-log "Created $INSTALL_DIR"
+if [[ ! -d "$INSTALL_DIR" ]]; then
+    mkdir -p "$INSTALL_DIR"
+    log_success "Created $INSTALL_DIR"
+fi
 
 # --- 4. Copy universal shell libraries ---
-if [[ -f "$REPO_ROOT/src/fast-download.sh" ]]; then
-    cp "$REPO_ROOT/src/fast-download.sh" "$INSTALL_DIR/fast-download.sh"
-    chmod +x "$INSTALL_DIR/fast-download.sh"
-    log_success "Copied fast-download.sh (bash/zsh)"
-fi
+cp "$REPO_ROOT/src/fast-download.sh" "$INSTALL_DIR/fast-download.sh"
+log_success "Copied fast-download.sh"
+
 if [[ -f "$REPO_ROOT/src/fast-download.fish" ]]; then
     cp "$REPO_ROOT/src/fast-download.fish" "$INSTALL_DIR/fast-download.fish"
     log_success "Copied fast-download.fish"
@@ -116,34 +140,48 @@ if [[ -f "$REPO_ROOT/src/fast-download.nu" ]]; then
     log_success "Copied fast-download.nu (nushell)"
 fi
 
-# --- 5. Apply global configs ---
-if [[ "$SKIP_GIT_CONFIG" != "true" ]] && has_cmd git; then
-    log "Applying Git optimizations..."
-    git config --global core.compression 9
-    git config --global core.preloadIndex true
-    git config --global core.fscache true
-    git config --global http.postBuffer 524288000
-    git config --global http.lowSpeedLimit 0
-    git config --global http.lowSpeedTime 999999
-    log_success "Git config applied"
+# --- 5. Copy PowerShell module ---
+if [[ -f "$REPO_ROOT/opencode/FastDownload.psm1" ]]; then
+    cp "$REPO_ROOT/opencode/FastDownload.psm1" "$INSTALL_DIR/FastDownload.psm1"
+    log_success "Copied FastDownload.psm1"
 fi
 
-if [[ "$SKIP_NPM_CONFIG" != "true" ]] && has_cmd npm; then
-    log "Applying npm optimizations..."
-    npm config set fetch-retries 5
-    npm config set fetch-retry-factor 2
-    npm config set prefer-offline true
-    log_success "npm config applied"
+# --- 6. Apply global configs (OPT-IN ONLY with APPLY_GLOBAL_CONFIGS=true) ---
+if [[ "$APPLY_GLOBAL_CONFIGS" == "true" ]]; then
+    log "Applying global optimizations (opt-in)..."
+    
+    if has_cmd git; then
+        log "Applying Git optimizations..."
+        git config --global core.compression 9
+        git config --global core.preloadIndex true
+        git config --global core.fscache true
+        git config --global http.postBuffer 524288000
+        git config --global http.lowSpeedLimit 0
+        git config --global http.lowSpeedTime 999999
+        log_success "Git config applied"
+    else
+        log_warn "Git not found, skipping Git config"
+    fi
+
+    if has_cmd npm; then
+        log "Applying npm optimizations..."
+        npm config set fetch-retries 5
+        npm config set fetch-retry-factor 2
+        npm config set prefer-offline true
+        log_success "npm config applied"
+    fi
+
+    if has_cmd pip; then
+        log "Applying pip optimizations..."
+        pip config set global.retries 5
+        pip config set global.timeout 60
+        log_success "pip config applied"
+    fi
+else
+    log "Skipping global configs (set APPLY_GLOBAL_CONFIGS=true to enable)"
 fi
 
-if [[ "$SKIP_PIP_CONFIG" != "true" ]] && has_cmd pip; then
-    log "Applying pip optimizations..."
-    pip config set global.retries 5
-    pip config set global.timeout 60
-    log_success "pip config applied"
-fi
-
-# --- 6. Deploy agent configurations ---
+# --- 7. Deploy agent configurations ---
 deploy_agents=()
 if [[ "$AGENT" == "all" ]]; then
     deploy_agents=(opencode claude-code codex continue cline vscode cursor windsurf jetbrains amazon-q warp)
@@ -164,29 +202,29 @@ for a in "${deploy_agents[@]}"; do
             fi
             ;;
         claude-code)
-            target="${HOME}/.claude/agents/fast-download.md"
+            target="${HOME}/.claude/agents"
             source="$REPO_ROOT/claude-code/fast-download.md"
-            mkdir -p "$(dirname "$target")"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "Claude Code agent deployed to $target"
             fi
             ;;
         codex)
-            target="${HOME}/.codex/agents/fast-download.md"
+            target="${HOME}/.codex/agents"
             source="$REPO_ROOT/codex/fast-download.md"
-            mkdir -p "$(dirname "$target")"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "Codex agent deployed to $target"
             fi
             ;;
         continue)
-            target="${HOME}/.continue/agents/fast-download.yaml"
+            target="${HOME}/.continue/agents"
             source="$REPO_ROOT/continue/fast-download.yaml"
-            mkdir -p "$(dirname "$target")"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "Continue agent deployed to $target"
             fi
             ;;
@@ -227,87 +265,36 @@ for a in "${deploy_agents[@]}"; do
             fi
             ;;
         jetbrains)
-            target="${HOME}/.config/JetBrains/ai/agents/fast-download.md"
-            source="$REPO_ROOT/claude-code/fast-download.md"
-            mkdir -p "$(dirname "$target")"
+            target="${HOME}/.config/JetBrains/ai/agents"
+            source="$REPO_ROOT/jetbrains/fast-download.md"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "JetBrains AI agent deployed to $target"
             fi
             ;;
         amazon-q)
-            target="${HOME}/.aws/amazonq/agents/fast-download.md"
-            source="$REPO_ROOT/claude-code/fast-download.md"
-            mkdir -p "$(dirname "$target")"
+            target="${HOME}/.aws/amazonq/agents"
+            source="$REPO_ROOT/amazon-q/fast-download.md"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "Amazon Q agent deployed to $target"
             fi
             ;;
         warp)
-            target="${HOME}/.warp/agents/fast-download.yaml"
-            source="$REPO_ROOT/continue/fast-download.yaml"
-            mkdir -p "$(dirname "$target")"
+            target="${HOME}/.warp/agents"
+            source="$REPO_ROOT/warp/fast-download.yaml"
             if [[ -f "$source" ]]; then
-                cp "$source" "$target"
+                mkdir -p "$target"
+                cp "$source" "$target/"
                 log_success "Warp agent deployed to $target"
             fi
             ;;
     esac
 done
 
-# --- 7. Add to PATH ---
-shell_rc=""
-case "$SHELL" in
-    */zsh) shell_rc="${HOME}/.zshrc" ;;
-    */bash) shell_rc="${HOME}/.bashrc" ;;
-    */fish) shell_rc="${HOME}/.config/fish/config.fish" ;;
-    *) shell_rc="${HOME}/.profile" ;;
-esac
-
-path_entry="export PATH=\"\$PATH:$INSTALL_DIR\""
-if [[ -f "$shell_rc" ]] && ! grep -q "$INSTALL_DIR" "$shell_rc"; then
-    echo "" >> "$shell_rc"
-    echo "# fast-download" >> "$shell_rc"
-    echo "$path_entry" >> "$shell_rc"
-    log_success "Added $INSTALL_DIR to PATH in $shell_rc"
-elif [[ ! -f "$shell_rc" ]]; then
-    echo "$path_entry" > "$shell_rc"
-    log_success "Created $shell_rc with PATH entry"
-else
-    log "PATH already configured in $shell_rc"
-fi
-
-# --- 8. Verify ---
-log "=== Verification ==="
-for t in aria2c git curl; do
-    if has_cmd "$t"; then
-        log_success "$t: Available"
-    else
-        log_warn "$t: NOT FOUND"
-    fi
-done
-
-# --- 9. Final message ---
-echo ""
 log_success "=== Installation Complete ==="
-echo ""
-log "Next steps:"
-log "  1. RESTART YOUR TERMINAL or run: source $shell_rc"
-log "  2. Test: aria2c --version"
-log "  3. Use in any terminal:"
-log '     aria2c -x 16 -s 16 -o "file.zip" "https://url/file.zip"'
-log '     git clone --depth 1 --filter=blob:none https://github.com/user/repo.git'
-echo ""
-log "Shell libraries installed:"
-log "  Bash/Zsh:   source $INSTALL_DIR/fast-download.sh"
-log "  Fish:       source $INSTALL_DIR/fast-download.fish"
-log "  Nushell:    source $INSTALL_DIR/fast-download.nu"
-log "Then use: fd_download \"url\" \"output\" [checksum]"
-echo ""
-log "Agent configs deployed:"
-for a in "${deploy_agents[@]}"; do
-    log "  - $a"
-done
-echo ""
-log_warn "IMPORTANT: Restart your terminal for PATH changes to take effect."
+log "Installed to: $INSTALL_DIR"
+log "Add to PATH: $INSTALL_DIR"
+log "Usage: source fast-download.sh; fd_download \"url\" \"output\" [checksum]"

@@ -54,11 +54,29 @@ def _fd_server_supports_range [$url] {
     }
 }
 
+def _fd_get_content_length [$url] {
+    let tool = (_fd_detect_curl)
+    if ($tool != "") {
+        let headers = (^curl -sI --max-time 10 $url 2>/dev/null | str join "\n")
+        let length_line = ($headers | lines | each { if ($in | str starts-with "content-length:") { $in } })
+        if ($length_line != "") {
+            let length = ($length_line | str replace "content-length:" "" | str trim)
+            if ($length | str match "^[0-9]+$") {
+                return ($length | into int)
+            }
+        }
+    }
+    return -1
+}
+
 def _fd_is_rate_limited [$url] {
     ($url | str contains "proof.ovh.net") or 
     (($url | str contains "github.com") and (not ($url | str match "github\.com/[^/]+/[^/]+/(raw|releases|archive)"))) or
     ($url | str contains "release-assets.githubusercontent.com")
 }
+
+# 10 MB threshold (in bytes) - below this, curl is more efficient due to aria2 overhead
+$env.FD_SMALL_FILE_THRESHOLD = 10485760
 
 # ============================================================================
 # INTERNAL: Smart download method selection
@@ -80,18 +98,26 @@ def _fd_select_download_method [$url, $force_curl: $env.FD_FORCE_CURL] {
         return "curl"
     }
 
-    # For rate-limited servers, use curl or reduced aria2
+    # For rate-limited servers, use reduced aria2
     if (_fd_is_rate_limited $url) {
         return "aria2-limited"
     }
 
     # Check if server supports range requests
-    if (_fd_server_supports_range $url) {
-        return "aria2"
+    if (not (_fd_server_supports_range $url)) {
+        # Server doesn't support range requests - aria2's multi-connection won't help
+        return "curl"
     }
 
-    # Server doesn't support range requests - aria2's multi-connection won't help
-    return "curl"
+    # Server supports ranges - check file size to decide between aria2 and curl
+    let content_length = (_fd_get_content_length $url)
+    if ($content_length > 0 and $content_length < $env.FD_SMALL_FILE_THRESHOLD) {
+        # File is smaller than threshold - curl is more efficient
+        return "curl"
+    }
+
+    # Large file or unknown size with range support - use aria2
+    return "aria2"
 }
 
 # ============================================================================
