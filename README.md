@@ -1,8 +1,6 @@
 # fast-download
 
-<div align="center">
-  <img src="assets/logo.png" alt="fast-download logo" width="50%">
-</div>
+
 
 > **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, Warp, and any shell.
 
