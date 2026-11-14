@@ -21,6 +21,7 @@
 param(
     [switch]$Force,
     [switch]$RevertConfigs,
+    [switch]$DryRun,
     [string]$InstallDir = "$env:USERPROFILE\.fast-download"
 )
 
@@ -28,6 +29,25 @@ function Write-Log {
     param([string]$Message, [ValidateSet('Info','Warn','Error','Success')][string]$Level = 'Info')
     $colors = @{ Info='Cyan'; Warn='Yellow'; Error='Red'; Success='Green' }
     Write-Host "[$(Get-Date -Format 'HH:mm:ss')] $Message" -ForegroundColor $colors[$Level]
+}
+
+# Dry-run safe helpers
+function Invoke-DryRunSafe {
+    param([scriptblock]$Action, [string]$Description)
+    if ($DryRun) {
+        Write-Log "DRY RUN: $Description" 'Info'
+        return
+    }
+    & $Action
+}
+
+function Remove-ItemSafe {
+    param([string]$Path, [switch]$Recurse)
+    $params = @{ Path = $Path; Force = $true; ErrorAction = 'SilentlyContinue' }
+    if ($Recurse) { $params.Recurse = $true }
+    $desc = "Remove-Item $Path"
+    if ($Recurse) { $desc += " -Recurse" }
+    Invoke-DryRunSafe { Remove-Item @params } $desc
 }
 
 if (-not $Force) {
@@ -59,9 +79,9 @@ $agents = @(
 foreach ($agent in $agents) {
     if (Test-Path $agent.Path) {
         if ($agent.Type -eq 'Dir') {
-            Remove-Item $agent.Path -Recurse -Force -ErrorAction SilentlyContinue
+            Remove-ItemSafe -Path $agent.Path -Recurse
         } else {
-            Remove-Item $agent.Path -Force -ErrorAction SilentlyContinue
+            Remove-ItemSafe -Path $agent.Path
         }
         Write-Log "Removed $($agent.Name) config" 'Success'
     }
@@ -69,15 +89,17 @@ foreach ($agent in $agents) {
 
 # Remove install directory
 if (Test-Path $InstallDir) {
-    Remove-Item $InstallDir -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-ItemSafe -Path $InstallDir -Recurse
     Write-Log "Removed $InstallDir" 'Success'
 }
 
 # Remove from user PATH
 $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($userPath -like "*$InstallDir*") {
-    $newPath = ($userPath -split ';' | Where-Object { $_ -ne $InstallDir }) -join ';'
-    [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    Invoke-DryRunSafe {
+        $newPath = ($userPath -split ';' | Where-Object { $_ -ne $InstallDir }) -join ';'
+        [Environment]::SetEnvironmentVariable("Path", $newPath, "User")
+    } "Remove $InstallDir from user PATH"
     Write-Log "Removed $InstallDir from user PATH" 'Success'
 }
 
@@ -85,27 +107,43 @@ if ($userPath -like "*$InstallDir*") {
 if ($RevertConfigs) {
     Write-Log "Reverting global configs..." 'Info'
     
-    $gitExe = "C:\Program Files\Git\bin\git.exe"
-    if (Test-Path $gitExe) {
-        & $gitExe config --global --unset core.compression 2>$null
-        & $gitExe config --global --unset core.preloadIndex 2>$null
-        & $gitExe config --global --unset core.fscache 2>$null
-        & $gitExe config --global --unset http.postBuffer 2>$null
-        & $gitExe config --global --unset http.lowSpeedLimit 2>$null
-        & $gitExe config --global --unset http.lowSpeedTime 2>$null
+    # Use the same Find-Git function from install.ps1
+    $gitCmd = Get-Command git -ErrorAction SilentlyContinue
+    if ($gitCmd) {
+        $gitExe = $gitCmd.Source
+    } else {
+        $commonPaths = @(
+            "C:\Program Files\Git\bin\git.exe",
+            "C:\Program Files (x86)\Git\bin\git.exe",
+            "$env:LOCALAPPDATA\Programs\Git\bin\git.exe",
+            "$env:USERPROFILE\AppData\Local\Programs\Git\bin\git.exe",
+            "$env:ProgramFiles\Git\bin\git.exe"
+        )
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) { $gitExe = $path; break }
+        }
+    }
+    
+    if ($gitExe) {
+        Invoke-DryRunSafe { & $gitExe config --global --unset core.compression 2>$null } "git config --global --unset core.compression"
+        Invoke-DryRunSafe { & $gitExe config --global --unset core.preloadIndex 2>$null } "git config --global --unset core.preloadIndex"
+        Invoke-DryRunSafe { & $gitExe config --global --unset core.fscache 2>$null } "git config --global --unset core.fscache"
+        Invoke-DryRunSafe { & $gitExe config --global --unset http.postBuffer 2>$null } "git config --global --unset http.postBuffer"
+        Invoke-DryRunSafe { & $gitExe config --global --unset http.lowSpeedLimit 2>$null } "git config --global --unset http.lowSpeedLimit"
+        Invoke-DryRunSafe { & $gitExe config --global --unset http.lowSpeedTime 2>$null } "git config --global --unset http.lowSpeedTime"
         Write-Log "Git config reverted" 'Success'
     }
     
     if (Get-Command npm -ErrorAction SilentlyContinue) {
-        npm config delete fetch-retries 2>$null
-        npm config delete fetch-retry-factor 2>$null
-        npm config delete prefer-offline 2>$null
+        Invoke-DryRunSafe { npm config delete fetch-retries 2>$null } "npm config delete fetch-retries"
+        Invoke-DryRunSafe { npm config delete fetch-retry-factor 2>$null } "npm config delete fetch-retry-factor"
+        Invoke-DryRunSafe { npm config delete prefer-offline 2>$null } "npm config delete prefer-offline"
         Write-Log "npm config reverted" 'Success'
     }
     
     if (Get-Command pip -ErrorAction SilentlyContinue) {
-        pip config unset global.retries 2>$null
-        pip config unset global.timeout 2>$null
+        Invoke-DryRunSafe { pip config unset global.retries 2>$null } "pip config unset global.retries"
+        Invoke-DryRunSafe { pip config unset global.timeout 2>$null } "pip config unset global.timeout"
         Write-Log "pip config reverted" 'Success'
     }
 } else {
