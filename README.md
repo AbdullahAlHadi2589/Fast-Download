@@ -20,14 +20,6 @@
 
 ---
 
-## 🎬 Demo
-
-![fast-download demo](docs/demo.gif)
-
-*Left: `aria2c -x 16` (39 MB/s) — Right: `curl` (5 MB/s) — Same file, same connection*
-
----
-
 ## The Problem
 
 Your internet is fast. Your AI agent's downloads are slow.
