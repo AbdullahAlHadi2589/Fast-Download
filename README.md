@@ -1,4 +1,4 @@
-# fast-download
+# Fast-Download
 
 <div align="center">
   <img src="assets/logo.png" alt="fast-download logo" width="50%">
@@ -22,14 +22,6 @@
 
 ---
 
-## 🎬 Demo
-
-![fast-download demo](docs/demo.gif)
-
-*Left: `aria2c -x 16` (39 MB/s) — Right: `curl` (5 MB/s) — Same file, same connection*
-
----
-
 ## The Problem
 
 Your internet is fast. Your AI agent's downloads are slow.
@@ -48,15 +40,15 @@ Your internet is fast. Your AI agent's downloads are slow.
 **One skill, every agent, maximum speed.**
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  fast-download                                              │
-├─────────────────────────────────────────────────────────────┤
+┌────────────────────────────────────────────────────────────┐
+│  fast-download                                             │
+├────────────────────────────────────────────────────────────┤
 │  ▸ aria2: 16 parallel connections, auto-resume, checksums  │
 │  ▸ Git: --depth=1 --filter=blob:none (90% less data)       │
-│  ▸ Fallback: curl with resume when servers rate-limit       │
+│  ▸ Fallback: curl with resume when servers rate-limit      │
 │  ▸ Verification: Built-in SHA256/MD5 validation            │
 │  ▸ Config: Optimized git/npm/pip defaults                  │
-└─────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────┘
 ```
 
 ### Benchmarks (Windows 11, 1 Gbps line)
@@ -185,14 +177,14 @@ fd_init  # Apply git/npm/pip optimizations
 ### Smart Tool Selection
 ```
 ┌────────────────────────────────────────────────────────────┐
-│                    DOWNLOAD REQUEST                         │
+│                    DOWNLOAD REQUEST                        │
 └────────────────────────────────────────────────────────────┘
                                │
                                ▼
 ┌────────────────────────────────────────────────────────────┐
-│  Is it a Git URL?                                           │
+│  Is it a Git URL?                                          │
 │  ├── YES → git clone --depth 1 --filter=blob:none          │
-│  └── NO  → Continue                                         │
+│  └── NO  → Continue                                        │
 └────────────────────────────────────────────────────────────┘
                                │
                                ▼
