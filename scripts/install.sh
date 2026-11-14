@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # fast-download installer for Linux/macOS/WSL
-# Usage: curl -fsSL https://raw.githubusercontent.com/yourusername/fast-download/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.sh | bash
 
 set -euo pipefail
 
