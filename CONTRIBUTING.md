@@ -9,12 +9,12 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 ## How to Contribute
 
 ### Reporting Bugs
-1. Check [existing issues](https://github.com/AbdullahAlHadi/fast-download/issues)
+1. Check [existing issues](https://github.com/AbdullahAlHadi2589/Fast-Download/issues)
 2. Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md)
 3. Include: OS, shell, agent, steps to reproduce, expected vs actual behavior
 
 ### Suggesting Features
-1. Check [existing issues](https://github.com/AbdullahAlHadi/fast-download/issues)
+1. Check [existing issues](https://github.com/AbdullahAlHadi2589/Fast-Download/issues)
 2. Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md)
 3. Explain the use case and expected behavior
 
@@ -37,7 +37,7 @@ By participating, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md
 ### Local Testing
 ```bash
 # Clone
-git clone https://github.com/AbdullahAlHadi/fast-download.git
+git clone https://github.com/AbdullahAlHadi2589/Fast-Download.git
 cd fast-download
 
 # Run test suite
@@ -146,7 +146,7 @@ Maintainers only:
 
 ## Questions?
 
-Open a [discussion](https://github.com/AbdullahAlHadi/fast-download/discussions) or [issue](https://github.com/AbdullahAlHadi/fast-download/issues).
+Open a [discussion](https://github.com/AbdullahAlHadi2589/Fast-Download/discussions) or [issue](https://github.com/AbdullahAlHadi2589/Fast-Download/issues).
 
 ---
 

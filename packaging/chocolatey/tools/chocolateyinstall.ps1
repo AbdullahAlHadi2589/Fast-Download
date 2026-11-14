@@ -96,5 +96,5 @@ Agent configs deployed:
 - Cline: $env:USERPROFILE\.cline\skills\fast-download
 - VS Code: $env:USERPROFILE\.vscode\extensions\fast-download
 
-Documentation: https://github.com/AbdullahAlHadi/fast-download
+Documentation: https://github.com/AbdullahAlHadi2589/Fast-Download
 "@ -ForegroundColor Cyan

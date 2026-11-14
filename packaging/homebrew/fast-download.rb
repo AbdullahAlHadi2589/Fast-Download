@@ -1,10 +1,10 @@
 class FastDownload < Formula
   desc "Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification"
-  homepage "https://github.com/AbdullahAlHadi/fast-download"
-  url "https://github.com/AbdullahAlHadi/fast-download/archive/refs/tags/v1.0.0.tar.gz"
+  homepage "https://github.com/AbdullahAlHadi2589/Fast-Download"
+  url "https://github.com/AbdullahAlHadi2589/Fast-Download/archive/refs/tags/v1.0.0.tar.gz"
   sha256 "REPLACE_WITH_ACTUAL_SHA256"
   license "MIT"
-  head "https://github.com/AbdullahAlHadi/fast-download.git", branch: "main"
+  head "https://github.com/AbdullahAlHadi2589/Fast-Download.git", branch: "main"
 
   depends_on "aria2"
   depends_on "git"
@@ -58,7 +58,7 @@ class FastDownload < Formula
       - Cline
       - VS Code / Cursor / Windsurf
 
-      See https://github.com/AbdullahAlHadi/fast-download for details.
+      See https://github.com/AbdullahAlHadi2589/Fast-Download for details.
     EOS
   end
 

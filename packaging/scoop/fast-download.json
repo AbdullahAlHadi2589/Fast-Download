@@ -1,12 +1,12 @@
 {
   "version": "1.0.0",
   "description": "Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification",
-  "homepage": "https://github.com/AbdullahAlHadi/fast-download",
+  "homepage": "https://github.com/AbdullahAlHadi2589/Fast-Download",
   "license": "MIT",
   "author": "Abdullah Al Hadi",
   "architecture": {
     "64bit": {
-      "url": "https://github.com/AbdullahAlHadi/fast-download/releases/download/v1.0.0/fast-download-v1.0.0-windows.zip",
+      "url": "https://github.com/AbdullahAlHadi2589/Fast-Download/releases/download/v1.0.0/fast-download-v1.0.0-windows.zip",
       "hash": "REPLACE_WITH_ACTUAL_SHA256"
     }
   },
@@ -25,12 +25,12 @@
     "Write-Host 'Run fast-download-install to deploy agent configs' -ForegroundColor Cyan"
   ],
   "checkver": {
-    "github": "https://github.com/AbdullahAlHadi/fast-download"
+    "github": "https://github.com/AbdullahAlHadi2589/Fast-Download"
   },
   "autoupdate": {
     "architecture": {
       "64bit": {
-        "url": "https://github.com/AbdullahAlHadi/fast-download/releases/download/v$version/fast-download-v$version-windows.zip"
+        "url": "https://github.com/AbdullahAlHadi2589/Fast-Download/releases/download/v$version/fast-download-v$version-windows.zip"
       }
     }
   }

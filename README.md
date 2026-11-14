@@ -3,18 +3,18 @@
 > **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, Warp, and any shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/AbdullahAlHadi/fast-download)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/AbdullahAlHadi2589/Fast-Download)
 [![Download: aria2](https://img.shields.io/badge/Powered%20by-aria2-green)](https://aria2.github.io/)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/AbdullahAlHadi/fast-download/ci.yml?branch=main&logo=github)](https://github.com/AbdullahAlHadi/fast-download/actions)
-[![Release](https://img.shields.io/github/v/release/AbdullahAlHadi/fast-download?logo=github)](https://github.com/AbdullahAlHadi/fast-download/releases)
-[![Downloads](https://img.shields.io/github/downloads/AbdullahAlHadi/fast-download/total?logo=github)](https://github.com/AbdullahAlHadi/fast-download/releases)
-[![Stars](https://img.shields.io/github/stars/AbdullahAlHadi/fast-download?style=social)](https://github.com/AbdullahAlHadi/fast-download/stargazers)
-[![Forks](https://img.shields.io/github/forks/AbdullahAlHadi/fast-download?style=social)](https://github.com/AbdullahAlHadi/fast-download/network)
-[![Issues](https://img.shields.io/github/issues/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download/issues)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AbdullahAlHadi/fast-download/blob/main/CONTRIBUTING.md)
-[![Code Size](https://img.shields.io/github/languages/code-size/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download)
-[![Top Language](https://img.shields.io/github/languages/top/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download)
-[![Last Commit](https://img.shields.io/github/last-commit/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download/commits/main)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/AbdullahAlHadi2589/Fast-Download/ci.yml?branch=main&logo=github)](https://github.com/AbdullahAlHadi2589/Fast-Download/actions)
+[![Release](https://img.shields.io/github/v/release/AbdullahAlHadi2589/Fast-Download?logo=github)](https://github.com/AbdullahAlHadi2589/Fast-Download/releases)
+[![Downloads](https://img.shields.io/github/downloads/AbdullahAlHadi2589/Fast-Download/total?logo=github)](https://github.com/AbdullahAlHadi2589/Fast-Download/releases)
+[![Stars](https://img.shields.io/github/stars/AbdullahAlHadi2589/Fast-Download?style=social)](https://github.com/AbdullahAlHadi2589/Fast-Download/stargazers)
+[![Forks](https://img.shields.io/github/forks/AbdullahAlHadi2589/Fast-Download?style=social)](https://github.com/AbdullahAlHadi2589/Fast-Download/network)
+[![Issues](https://img.shields.io/github/issues/AbdullahAlHadi2589/Fast-Download)](https://github.com/AbdullahAlHadi2589/Fast-Download/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AbdullahAlHadi2589/Fast-Download/blob/main/CONTRIBUTING.md)
+[![Code Size](https://img.shields.io/github/languages/code-size/AbdullahAlHadi2589/Fast-Download)](https://github.com/AbdullahAlHadi2589/Fast-Download)
+[![Top Language](https://img.shields.io/github/languages/top/AbdullahAlHadi2589/Fast-Download)](https://github.com/AbdullahAlHadi2589/Fast-Download)
+[![Last Commit](https://img.shields.io/github/last-commit/AbdullahAlHadi2589/Fast-Download)](https://github.com/AbdullahAlHadi2589/Fast-Download/commits/main)
 
 ---
 
@@ -71,12 +71,12 @@ Your internet is fast. Your AI agent's downloads are slow.
 
 ### One-liner (PowerShell) — Windows
 ```powershell
-irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex
 ```
 
 ### One-liner (Bash) — Linux/macOS/WSL
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
 ```
 
 ### Manual
@@ -323,7 +323,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ### Quick Start
 ```bash
-git clone https://github.com/AbdullahAlHadi/fast-download.git
+git clone https://github.com/AbdullahAlHadi2589/Fast-Download.git
 cd fast-download
 # Make your changes
 ./scripts/test.sh  # Run tests
@@ -354,15 +354,15 @@ MIT License — see [LICENSE](LICENSE) for details.
 - [aria2](https://aria2.github.io/) — The download accelerator that makes this possible
 - [Git](https://git-scm.com/) — Shallow clone optimization
 - All the AI agent platforms for extensibility
-- Contributors: [See GitHub](https://github.com/AbdullahAlHadi/fast-download/graphs/contributors)
+- Contributors: [See GitHub](https://github.com/AbdullahAlHadi2589/Fast-Download/graphs/contributors)
 
 ---
 
 ## Support
 
-- 🐛 [Report a bug](https://github.com/AbdullahAlHadi/fast-download/issues/new?template=bug_report.md)
-- 💡 [Request a feature](https://github.com/AbdullahAlHadi/fast-download/issues/new?template=feature_request.md)
-- 💬 [Discussions](https://github.com/AbdullahAlHadi/fast-download/discussions)
+- 🐛 [Report a bug](https://github.com/AbdullahAlHadi2589/Fast-Download/issues/new?template=bug_report.md)
+- 💡 [Request a feature](https://github.com/AbdullahAlHadi2589/Fast-Download/issues/new?template=feature_request.md)
+- 💬 [Discussions](https://github.com/AbdullahAlHadi2589/Fast-Download/discussions)
 - ⭐ Star this repo if it helped you!
 
 ---

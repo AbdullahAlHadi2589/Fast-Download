@@ -5,17 +5,17 @@
     <version>1.0.0</version>
     <title>fast-download</title>
     <authors>Abdullah Al Hadi</authors>
-    <owners>AbdullahAlHadi</owners>
+    <owners>AbdullahAlHadi2589</owners>
     <description>Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification</description>
     <summary>Download accelerator for AI coding agents</summary>
-    <projectUrl>https://github.com/AbdullahAlHadi/fast-download</projectUrl>
-    <packageSourceUrl>https://github.com/AbdullahAlHadi/fast-download</packageSourceUrl>
+    <projectUrl>https://github.com/AbdullahAlHadi2589/Fast-Download</projectUrl>
+    <packageSourceUrl>https://github.com/AbdullahAlHadi2589/Fast-Download</packageSourceUrl>
     <tags>download accelerator aria2 git shallow-clone checksum ai-agent opencode claude-code codex continue cline vscode cursor windsurf</tags>
-    <licenseUrl>https://github.com/AbdullahAlHadi/fast-download/blob/main/LICENSE</licenseUrl>
+    <licenseUrl>https://github.com/AbdullahAlHadi2589/Fast-Download/blob/main/LICENSE</licenseUrl>
     <license type="expression">MIT</license>
     <copyright>Copyright (c) 2026 Abdullah Al Hadi</copyright>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <releaseNotes>https://github.com/AbdullahAlHadi/fast-download/releases</releaseNotes>
+    <releaseNotes>https://github.com/AbdullahAlHadi2589/Fast-Download/releases</releaseNotes>
     <dependencies>
       <dependency id="aria2" version="1.37.0" />
       <dependency id="git" version="2.56.0" />

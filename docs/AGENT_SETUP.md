@@ -9,10 +9,10 @@ Complete installation instructions for each supported AI coding agent.
 Run the universal installer:
 ```bash
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex
 
 # Linux/macOS/WSL (Bash)
-curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
 ```
 
 Or install manually per agent below.
@@ -83,41 +83,41 @@ git --version
 #### Windows (PowerShell)
 ```powershell
 # Install everything
-irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex
 
 # Install specific agents only
-irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex -Agent opencode,claude-code,vscode
+irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex -Agent opencode,claude-code,vscode
 
 # Skip certain components
-irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex -SkipAria2 -SkipGitConfig
+irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex -SkipAria2 -SkipGitConfig
 ```
 
 #### Linux/macOS/WSL (Bash)
 ```bash
 # Install everything
-curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
 
 # Install specific agents only
-curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash -s -- opencode claude-code vscode
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash -s -- opencode claude-code vscode
 
 # Skip certain components
-SKIP_ARIA2=true SKIP_GIT_CONFIG=true curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+SKIP_ARIA2=true SKIP_GIT_CONFIG=true curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
 ```
 
 ### Method 2: Package Managers
 
 ```bash
 # Homebrew (macOS/Linux)
-brew install AbdullahAlHadi/tap/fast-download
+brew install AbdullahAlHadi2589/tap/fast-download
 
 # Chocolatey (Windows)
 choco install fast-download
 
 # Winget (Windows)
-winget install AbdullahAlHadi.fast-download
+winget install AbdullahAlHadi2589.Fast-Download
 
 # Scoop (Windows)
-scoop bucket add fast-download https://github.com/AbdullahAlHadi/fast-download
+scoop bucket add fast-download https://github.com/AbdullahAlHadi2589/Fast-Download
 scoop install fast-download
 
 # AUR (Arch Linux)

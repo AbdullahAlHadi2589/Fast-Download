@@ -4,7 +4,7 @@
 .AUTHOR Abdullah Al Hadi
 .COPYRIGHT (c) 2026 Abdullah Al Hadi
 .LICENSEURI https://opensource.org/licenses/MIT
-.PROJECTURI https://github.com/AbdullahAlHadi/fast-download
+.PROJECTURI https://github.com/AbdullahAlHadi2589/Fast-Download
 #>
 
 <#PSScriptInfo

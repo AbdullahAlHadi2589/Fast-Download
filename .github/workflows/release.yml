@@ -83,12 +83,12 @@ jobs:
             
             **Windows (PowerShell):**
             ```powershell
-            irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
+            irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.ps1 | iex
             ```
             
             **Linux/macOS/WSL (Bash):**
             ```bash
-            curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+            curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/main/scripts/install.sh | bash
             ```
             
             ### What's Included
@@ -98,7 +98,7 @@ jobs:
             - Installers and uninstallers
             
             ### Supported Agents
-            See [README](https://github.com/AbdullahAlHadi/fast-download#supported-agents) for full list.
+            See [README](https://github.com/AbdullahAlHadi2589/Fast-Download#supported-agents) for full list.
 
   test-release:
     name: Test Release Artifacts
