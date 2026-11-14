@@ -1,0 +1,29 @@
+<idea-plugin>
+  <id>com.github.abdullahalhadi2589.fast-download</id>
+  <name>Fast Download</name>
+  <version>1.0.0</version>
+  <vendor email="abdullah@example.com" url="https://github.com/AbdullahAlHadi2589">AbdullahAlHadi2589</vendor>
+  <description><![CDATA[
+    Optimized download accelerator for JetBrains IDEs using aria2, parallel connections, and smart fallbacks.
+    Use for large file downloads, Git shallow clones, and checksum-verified transfers.
+  ]]></description>
+  <change-notes><![CDATA[
+    <ul>
+      <li>Initial release with aria2, Git shallow clones, curl fallback</li>
+    </ul>
+  ]]></change-notes>
+  <idea-version since-build="231"/>
+  <depends>com.intellij.modules.platform</depends>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceImplementation="com.github.abdullahalhadi2589.fastdownload.FastDownloadService"/>
+    <toolWindow id="FastDownload" secondary="true" icon="/icons/fast-download.svg" anchor="right" factoryClass="com.github.abdullahalhadi2589.fastdownload.FastDownloadToolWindowFactory"/>
+  </extensions>
+  <actions>
+    <group id="FastDownload.Menu" text="Fast Download" description="Fast Download actions">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <action id="FastDownload.DownloadFile" class="com.github.abdullahalhadi2589.fastdownload.actions.DownloadFileAction" text="Download File..." description="Download file with aria2 accelerator"/>
+      <action id="FastDownload.CloneRepo" class="com.github.abdullahalhadi2589.fastdownload.actions.CloneRepoAction" text="Clone Repository (Shallow)" description="Clone Git repo with shallow clone"/>
+      <action id="FastDownload.VerifyChecksum" class="com.github.abdullahalhadi2589.fastdownload.actions.VerifyChecksumAction" text="Verify Checksum" description="Verify file checksum"/>
+    </group>
+  </actions>
+</idea-plugin>

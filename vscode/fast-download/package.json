@@ -1,0 +1,59 @@
+{
+  "name": "fast-download",
+  "displayName": "Fast Download",
+  "description": "Optimized download accelerator using aria2, parallel connections, and smart fallbacks",
+  "version": "1.0.0",
+  "publisher": "AbdullahAlHadi2589",
+  "license": "MIT",
+  "categories": ["Other"],
+  "keywords": ["download", "aria2", "accelerator", "git", "shallow-clone"],
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "fast-download.downloadFile",
+        "title": "Fast Download: Download File",
+        "category": "Fast Download"
+      },
+      {
+        "command": "fast-download.cloneRepo",
+        "title": "Fast Download: Clone Repository (Shallow)",
+        "category": "Fast Download"
+      },
+      {
+        "command": "fast-download.verifyChecksum",
+        "title": "Fast Download: Verify Checksum",
+        "category": "Fast Download"
+      }
+    ],
+    "configuration": {
+      "title": "Fast Download",
+      "properties": {
+        "fast-download.maxConnections": {
+          "type": "integer",
+          "default": 16,
+          "description": "Maximum parallel connections for aria2"
+        },
+        "fast-download.defaultTool": {
+          "type": "string",
+          "enum": ["aria2", "curl", "auto"],
+          "default": "auto",
+          "description": "Default download tool"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "echo 'No build step required'",
+    "compile": "echo 'No compile step required'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AbdullahAlHadi2589/Fast-Download"
+  },
+  "bugs": {
+    "url": "https://github.com/AbdullahAlHadi2589/Fast-Download/issues"
+  }
+}

@@ -1,0 +1,47 @@
+# Fast Download Skill for Cursor
+
+## Description
+Optimized download accelerator using aria2, parallel connections, and smart fallbacks. Use for large file downloads, Git shallow clones, and checksum-verified transfers.
+
+## When to Use
+- Downloading files > 10MB from HTTP/HTTPS/FTP
+- Cloning Git repositories (shallow clones preferred)
+- Any download requiring resume capability
+- Downloads requiring checksum verification
+
+## Core Commands
+
+### Download a file (HTTP/HTTPS)
+```bash
+# Preferred: aria2 with 16 connections
+aria2c -x 16 -s 16 -k 1M --file-allocation=falloc --continue=true -o "output.zip" "https://example.com/file.zip"
+
+# Fallback: curl with resume
+curl -L -C - -o "output.zip" "https://example.com/file.zip"
+```
+
+### Clone a Git repository
+```bash
+# Shallow clone (preferred when history not needed)
+git clone --depth 1 --single-branch --filter=blob:none https://github.com/user/repo.git
+
+# Full clone (when history required)
+git clone https://github.com/user/repo.git
+```
+
+### Download with checksum verification
+```bash
+aria2c --checksum=sha256=<expected_hash> -x 16 -s 16 -o "output.zip" "https://example.com/file.zip"
+```
+
+## Tool Selection Logic
+- Files > 10MB with range support → aria2 with 16 connections
+- Files < 10MB or no range support → curl with resume
+- Git repos without full history needed → shallow clone
+- npm/pip packages → Use native package managers
+
+## Safety Rules
+- Always verify SSL certificates
+- Always verify checksums when available
+- Never disable security features
+- Fall back gracefully when tools unavailable
