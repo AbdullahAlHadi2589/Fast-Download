@@ -13,7 +13,7 @@ We take security seriously. If you discover a security vulnerability, please rep
 
 **Do not** open a public issue for security vulnerabilities.
 
-Instead, email: **abdullahalhadi@proton.me**
+Instead, email: **abdullah.pkg.ctg@gmail.com**
 
 Include:
 - Description of the vulnerability
@@ -77,4 +77,4 @@ Security patches will be released as patch versions (e.g., 1.0.1) and announced 
 
 ## Contact
 
-Security contact: **Abdullah Al Hadi** — abdullahalhadi@proton.me
+Security contact: **Abdullah Al Hadi** — abdullah.pkg.ctg@gmail.com
