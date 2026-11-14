@@ -76,7 +76,7 @@ curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/ma
 ```
 
 ### Quick Agent Install
-**Easiest way:** Copy the one-liner above and paste it into your AI coding agent (OpenCode, Claude Code, Cursor, etc.) — it will handle the installation automatically.
+**Easiest way:** Copy the Github link and paste it into your AI coding agent (OpenCode, Claude Code, Cursor, etc.) — it will handle the installation automatically.
 
 ### Manual
 1. Install aria2: `winget install aria2.aria2` / `brew install aria2` / `apt install aria2`
