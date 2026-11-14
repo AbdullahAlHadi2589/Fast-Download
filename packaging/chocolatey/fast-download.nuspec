@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>fast-download</id>
+    <version>1.0.0</version>
+    <title>fast-download</title>
+    <authors>Abdullah Al Hadi</authors>
+    <owners>AbdullahAlHadi</owners>
+    <description>Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification</description>
+    <summary>Download accelerator for AI coding agents</summary>
+    <projectUrl>https://github.com/AbdullahAlHadi/fast-download</projectUrl>
+    <packageSourceUrl>https://github.com/AbdullahAlHadi/fast-download</packageSourceUrl>
+    <tags>download accelerator aria2 git shallow-clone checksum ai-agent opencode claude-code codex continue cline vscode cursor windsurf</tags>
+    <licenseUrl>https://github.com/AbdullahAlHadi/fast-download/blob/main/LICENSE</licenseUrl>
+    <license type="expression">MIT</license>
+    <copyright>Copyright (c) 2026 Abdullah Al Hadi</copyright>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <releaseNotes>https://github.com/AbdullahAlHadi/fast-download/releases</releaseNotes>
+    <dependencies>
+      <dependency id="aria2" version="1.37.0" />
+      <dependency id="git" version="2.56.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="src\**" target="tools" />
+    <file src="opencode\**" target="tools\opencode" />
+    <file src="claude-code\**" target="tools\claude-code" />
+    <file src="codex\**" target="tools\codex" />
+    <file src="continue\**" target="tools\continue" />
+    <file src="cline\**" target="tools\cline" />
+    <file src="vscode\**" target="tools\vscode" />
+    <file src="scripts\install.ps1" target="tools" />
+    <file src="scripts\uninstall.ps1" target="tools" />
+    <file src="README.md" target="tools" />
+    <file src="LICENSE" target="tools" />
+  </files>
+</package>

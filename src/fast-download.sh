@@ -49,7 +49,11 @@ _fd_detect_git() {
 # ============================================================================
 _fd_is_git_url() {
     local url="$1"
-    [[ "$url" =~ ^https?://github\.com/ ]] || [[ "$url" =~ \.git$ ]] || [[ "$url" =~ ^git@ ]]
+    # Match actual Git repository URLs, not release assets
+    [[ "$url" =~ ^https?://github\.com/[^/]+/[^/]+/?$ ]] || \
+    [[ "$url" =~ ^https?://github\.com/[^/]+/[^/]+\.git$ ]] || \
+    [[ "$url" =~ ^git@ ]] || \
+    [[ "$url" =~ \.git$ ]]
 }
 
 _fd_server_supports_range() {
@@ -191,7 +195,11 @@ fd_git_clone() {
 
     args+=("$url" "$output_dir")
 
-    echo "Cloning repository${shallow == true && echo ' (shallow)'}..." >&2
+    if [[ "$shallow" == "true" ]]; then
+        echo "Cloning repository (shallow)..." >&2
+    else
+        echo "Cloning repository..." >&2
+    fi
 
     if "$git_cmd" "${args[@]}" 2>&1; then
         echo "Clone completed" >&2
@@ -280,8 +288,14 @@ fd_speed_test() {
             --file-allocation=none --continue=true -o "$(basename "$temp_file")" -d "$(dirname "$temp_file")" \
             "$test_url" 2>&1; then
             end=$(date +%s.%N)
-            duration=$(echo "$end - $start" | bc)
-            speed=$(echo "scale=1; $test_size_mb / $duration" | bc)
+            if command -v bc >/dev/null 2>&1; then
+                duration=$(echo "$end - $start" | bc)
+                speed=$(echo "scale=1; $test_size_mb / $duration" | bc)
+            else
+                # Use awk for floating point arithmetic
+                duration=$(awk -v e="$end" -v s="$start" 'BEGIN { printf "%.3f", e - s }')
+                speed=$(awk -v sz="$test_size_mb" -v d="$duration" 'BEGIN { if (d > 0) printf "%.1f", sz / d; else print "N/A" }')
+            fi
             echo "Time: ${duration}s" >&2
             echo "Speed: ${speed} MB/s" >&2
         fi
@@ -298,8 +312,14 @@ fd_speed_test() {
     start=$(date +%s.%N)
     if "$curl_cmd" -L -o "$temp_file" "$test_url" 2>&1; then
         end=$(date +%s.%N)
-        duration=$(echo "$end - $start" | bc)
-        speed=$(echo "scale=1; $test_size_mb / $duration" | bc)
+        if command -v bc >/dev/null 2>&1; then
+            duration=$(echo "$end - $start" | bc)
+            speed=$(echo "scale=1; $test_size_mb / $duration" | bc)
+        else
+            # Use awk for floating point arithmetic
+            duration=$(awk -v e="$end" -v s="$start" 'BEGIN { printf "%.3f", e - s }')
+            speed=$(awk -v sz="$test_size_mb" -v d="$duration" 'BEGIN { if (d > 0) printf "%.1f", sz / d; else print "N/A" }')
+        fi
         echo "Time: ${duration}s" >&2
         echo "Speed: ${speed} MB/s" >&2
     fi
@@ -336,6 +356,17 @@ fd_init() {
 
     echo "fast-download initialized" >&2
 }
+
+# ============================================================================
+# FISH SHELL COMPATIBILITY
+# ============================================================================
+# Fish doesn't support `export -f` or bash-style function definitions.
+# Provide a fish-friendly wrapper that can be sourced in fish.
+if [[ -n "${FISH_VERSION:-}" ]] || [[ "${0##*/}" == "fish" ]]; then
+    # Fish-compatible function definitions (simplified)
+    # Note: Full fish support requires separate .fish file
+    :
+fi
 
 # ============================================================================
 # EXPORT

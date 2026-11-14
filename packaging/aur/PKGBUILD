@@ -1,0 +1,53 @@
+# Maintainer: Abdullah Al Hadi <abdullahalhadi@proton.me>
+pkgname=fast-download
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification"
+arch=('any')
+url="https://github.com/AbdullahAlHadi/fast-download"
+license=('MIT')
+depends=('aria2' 'git' 'curl' 'bc')
+optdepends=(
+  'opencode: OpenCode agent support'
+  'claude-code: Claude Code agent support'
+  'codex: OpenAI Codex agent support'
+  'continue: Continue.dev agent support'
+  'cline: Cline agent support'
+  'code: VS Code agent support'
+  'cursor: Cursor agent support'
+  'windsurf: Windsurf agent support'
+)
+source=("$pkgname-$pkgver.tar.gz::https://github.com/AbdullahAlHadi/fast-download/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('REPLACE_WITH_ACTUAL_SHA256')
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  # Install shell library
+  install -Dm755 src/fast-download.sh "$pkgdir/usr/lib/fast-download/fast-download.sh"
+  
+  # Install agent configurations
+  install -dm755 "$pkgdir/usr/share/fast-download/agents"
+  cp -r opencode claude-code codex continue cline vscode "$pkgdir/usr/share/fast-download/agents/"
+  
+  # Install scripts
+  install -Dm755 scripts/install.sh "$pkgdir/usr/lib/fast-download/install.sh"
+  install -Dm755 scripts/uninstall.sh "$pkgdir/usr/lib/fast-download/uninstall.sh"
+  
+  # Create symlinks
+  install -dm755 "$pkgdir/usr/bin"
+  ln -sf /usr/lib/fast-download/fast-download.sh "$pkgdir/usr/bin/fast-download"
+  ln -sf /usr/lib/fast-download/install.sh "$pkgdir/usr/bin/fast-download-install"
+  ln -sf /usr/lib/fast-download/uninstall.sh "$pkgdir/usr/bin/fast-download-uninstall"
+  
+  # Install documentation
+  install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 docs/PERFORMANCE_REPORT.md "$pkgdir/usr/share/doc/$pkgname/PERFORMANCE_REPORT.md"
+  install -Dm644 docs/AGENT_SETUP.md "$pkgdir/usr/share/doc/$pkgname/AGENT_SETUP.md"
+  
+  # Install shell completions (generate at build time)
+  # TODO: Add completion generation
+}
+
+# vim:set ts=2 sw=2 et:

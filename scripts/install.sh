@@ -101,11 +101,19 @@ fi
 mkdir -p "$INSTALL_DIR"
 log "Created $INSTALL_DIR"
 
-# --- 4. Copy universal shell library ---
+# --- 4. Copy universal shell libraries ---
 if [[ -f "$REPO_ROOT/src/fast-download.sh" ]]; then
     cp "$REPO_ROOT/src/fast-download.sh" "$INSTALL_DIR/fast-download.sh"
     chmod +x "$INSTALL_DIR/fast-download.sh"
-    log_success "Copied fast-download.sh"
+    log_success "Copied fast-download.sh (bash/zsh)"
+fi
+if [[ -f "$REPO_ROOT/src/fast-download.fish" ]]; then
+    cp "$REPO_ROOT/src/fast-download.fish" "$INSTALL_DIR/fast-download.fish"
+    log_success "Copied fast-download.fish"
+fi
+if [[ -f "$REPO_ROOT/src/fast-download.nu" ]]; then
+    cp "$REPO_ROOT/src/fast-download.nu" "$INSTALL_DIR/fast-download.nu"
+    log_success "Copied fast-download.nu (nushell)"
 fi
 
 # --- 5. Apply global configs ---
@@ -138,7 +146,7 @@ fi
 # --- 6. Deploy agent configurations ---
 deploy_agents=()
 if [[ "$AGENT" == "all" ]]; then
-    deploy_agents=(opencode claude-code codex continue cline vscode)
+    deploy_agents=(opencode claude-code codex continue cline vscode cursor windsurf jetbrains amazon-q warp)
 else
     deploy_agents=("$AGENT")
 fi
@@ -200,6 +208,51 @@ for a in "${deploy_agents[@]}"; do
                 log_success "VS Code skill deployed to $target"
             fi
             ;;
+        cursor)
+            target="${HOME}/.cursor/extensions/fast-download"
+            source="$REPO_ROOT/vscode/fast-download"
+            if [[ -d "$source" ]]; then
+                mkdir -p "$target"
+                cp -r "$source"/* "$target/"
+                log_success "Cursor skill deployed to $target"
+            fi
+            ;;
+        windsurf)
+            target="${HOME}/.windsurf/extensions/fast-download"
+            source="$REPO_ROOT/vscode/fast-download"
+            if [[ -d "$source" ]]; then
+                mkdir -p "$target"
+                cp -r "$source"/* "$target/"
+                log_success "Windsurf skill deployed to $target"
+            fi
+            ;;
+        jetbrains)
+            target="${HOME}/.config/JetBrains/ai/agents/fast-download.md"
+            source="$REPO_ROOT/claude-code/fast-download.md"
+            mkdir -p "$(dirname "$target")"
+            if [[ -f "$source" ]]; then
+                cp "$source" "$target"
+                log_success "JetBrains AI agent deployed to $target"
+            fi
+            ;;
+        amazon-q)
+            target="${HOME}/.aws/amazonq/agents/fast-download.md"
+            source="$REPO_ROOT/claude-code/fast-download.md"
+            mkdir -p "$(dirname "$target")"
+            if [[ -f "$source" ]]; then
+                cp "$source" "$target"
+                log_success "Amazon Q agent deployed to $target"
+            fi
+            ;;
+        warp)
+            target="${HOME}/.warp/agents/fast-download.yaml"
+            source="$REPO_ROOT/continue/fast-download.yaml"
+            mkdir -p "$(dirname "$target")"
+            if [[ -f "$source" ]]; then
+                cp "$source" "$target"
+                log_success "Warp agent deployed to $target"
+            fi
+            ;;
     esac
 done
 
@@ -246,7 +299,10 @@ log "  3. Use in any terminal:"
 log '     aria2c -x 16 -s 16 -o "file.zip" "https://url/file.zip"'
 log '     git clone --depth 1 --filter=blob:none https://github.com/user/repo.git'
 echo ""
-log "Bash/WSL: source $INSTALL_DIR/fast-download.sh"
+log "Shell libraries installed:"
+log "  Bash/Zsh:   source $INSTALL_DIR/fast-download.sh"
+log "  Fish:       source $INSTALL_DIR/fast-download.fish"
+log "  Nushell:    source $INSTALL_DIR/fast-download.nu"
 log "Then use: fd_download \"url\" \"output\" [checksum]"
 echo ""
 log "Agent configs deployed:"

@@ -1,0 +1,35 @@
+# CODEOWNERS
+# These users will be automatically requested for review when files they own are modified.
+
+# Global owners
+* @AbdullahAlHadi
+
+# Shell library
+/src/fast-download.sh @AbdullahAlHadi
+
+# PowerShell module
+/opencode/FastDownload.psm1 @AbdullahAlHadi
+
+# Installers
+/scripts/install.sh @AbdullahAlHadi
+/scripts/install.ps1 @AbdullahAlHadi
+/scripts/uninstall.sh @AbdullahAlHadi
+/scripts/uninstall.ps1 @AbdullahAlHadi
+
+# Agent configurations
+/opencode/ @AbdullahAlHadi
+/claude-code/ @AbdullahAlHadi
+/codex/ @AbdullahAlHadi
+/continue/ @AbdullahAlHadi
+/cline/ @AbdullahAlHadi
+/vscode/ @AbdullahAlHadi
+
+# CI/CD
+/.github/workflows/ @AbdullahAlHadi
+
+# Packaging
+/packaging/ @AbdullahAlHadi
+
+# Documentation
+/docs/ @AbdullahAlHadi
+README.md @AbdullahAlHadi

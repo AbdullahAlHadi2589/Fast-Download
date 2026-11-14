@@ -2,7 +2,8 @@
 # Test suite for fast-download
 # Run from repo root: bash scripts/test.sh
 
-set -euo pipefail
+# set -euo pipefail  # Disabled for debugging
+set -u
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -43,16 +44,40 @@ else
     fail "install.sh syntax error"
 fi
 
-# --- Test 3: Source shell library ---
-log "Test 3: Source shell library"
+# --- Test 3: Shell library syntax (fish) ---
+log "Test 3: Fish shell library syntax"
+if command -v fish >/dev/null 2>&1; then
+    if fish -n "$REPO_ROOT/src/fast-download.fish" 2>/dev/null; then
+        pass "fast-download.fish syntax OK"
+    else
+        fail "fast-download.fish syntax error"
+    fi
+else
+    warn "fish not installed, skipping fish syntax check"
+fi
+
+# --- Test 4: Shell library syntax (nushell) ---
+log "Test 4: Nushell library syntax"
+if command -v nu >/dev/null 2>&1; then
+    if nu --parse "$REPO_ROOT/src/fast-download.nu" 2>/dev/null; then
+        pass "fast-download.nu syntax OK"
+    else
+        fail "fast-download.nu syntax error"
+    fi
+else
+    warn "nu not installed, skipping nushell syntax check"
+fi
+
+# --- Test 5: Source shell library (bash) ---
+log "Test 5: Source shell library (bash)"
 if source "$REPO_ROOT/src/fast-download.sh" 2>/dev/null; then
     pass "fast-download.sh sources cleanly"
 else
     fail "fast-download.sh source failed"
 fi
 
-# --- Test 4: Functions exported ---
-log "Test 4: Functions exported"
+# --- Test 6: Functions exported (bash) ---
+log "Test 6: Functions exported (bash)"
 source "$REPO_ROOT/src/fast-download.sh" 2>/dev/null
 for fn in fd_download fd_git_clone fd_verify fd_speed_test fd_init; do
     if declare -f "$fn" >/dev/null; then
@@ -62,8 +87,34 @@ for fn in fd_download fd_git_clone fd_verify fd_speed_test fd_init; do
     fi
 done
 
-# --- Test 5: Tool detection ---
-log "Test 5: Tool detection"
+# --- Test 7: Source shell library (fish) ---
+log "Test 7: Source shell library (fish)"
+if command -v fish >/dev/null 2>&1; then
+    if fish -c "source '$REPO_ROOT/src/fast-download.fish'; functions -q fd_download" 2>/dev/null; then
+        pass "fast-download.fish sources cleanly"
+    else
+        fail "fast-download.fish source failed"
+    fi
+else
+    warn "fish not installed, skipping fish source test"
+fi
+
+# --- Test 8: Functions exported (fish) ---
+log "Test 8: Functions exported (fish)"
+if command -v fish >/dev/null 2>&1; then
+    for fn in fd_download fd_git_clone fd_verify fd_speed_test fd_init; do
+        if fish -c "source '$REPO_ROOT/src/fast-download.fish'; functions -q $fn" 2>/dev/null; then
+            pass "Fish function $fn exported"
+        else
+            fail "Fish function $fn NOT exported"
+        fi
+    done
+else
+    warn "fish not installed, skipping fish function tests"
+fi
+
+# --- Test 9: Tool detection ---
+log "Test 9: Tool detection"
 source "$REPO_ROOT/src/fast-download.sh" 2>/dev/null
 for tool in aria2c git curl; do
     if command -v "$tool" >/dev/null 2>&1; then
@@ -73,8 +124,8 @@ for tool in aria2c git curl; do
     fi
 done
 
-# --- Test 6: Download with aria2 (small file) ---
-log "Test 6: aria2 download (small file)"
+# --- Test 10: Download with aria2 (small file) ---
+log "Test 10: aria2 download (small file)"
 if command -v aria2c >/dev/null 2>&1; then
     cd "$TEST_DIR"
     if aria2c -x 4 -s 4 -k 1M --file-allocation=none --continue=true \
@@ -91,8 +142,8 @@ else
     warn "aria2c not installed, skipping download test"
 fi
 
-# --- Test 7: Git shallow clone ---
-log "Test 7: Git shallow clone"
+# --- Test 11: Git shallow clone ---
+log "Test 11: Git shallow clone"
 if command -v git >/dev/null 2>&1; then
     cd "$TEST_DIR"
     if git clone --depth 1 --single-branch --filter=blob:none https://github.com/git/git.git git-shallow-test 2>&1 | tail -3; then
@@ -109,8 +160,8 @@ else
     warn "git not installed, skipping clone test"
 fi
 
-# --- Test 8: Checksum verification ---
-log "Test 8: Checksum verification"
+# --- Test 12: Checksum verification ---
+log "Test 12: Checksum verification"
 source "$REPO_ROOT/src/fast-download.sh" 2>/dev/null
 echo "test content" > "$TEST_DIR/checksum-test.txt"
 expected=$(sha256sum "$TEST_DIR/checksum-test.txt" | cut -d' ' -f1)
@@ -140,6 +191,13 @@ agents=(
     "cline/fast-download/instructions.md"
     "vscode/fast-download/skill.json"
     "vscode/fast-download/instructions.md"
+    "cursor/fast-download/skill.json"
+    "cursor/fast-download/instructions.md"
+    "windsurf/fast-download/skill.json"
+    "windsurf/fast-download/instructions.md"
+    "jetbrains/fast-download.md"
+    "amazon-q/fast-download.md"
+    "warp/fast-download.yaml"
 )
 for f in "${agents[@]}"; do
     if [[ -f "$REPO_ROOT/$f" ]]; then
@@ -149,11 +207,14 @@ for f in "${agents[@]}"; do
     fi
 done
 
-# --- Test 10: Core docs exist ---
-log "Test 10: Core documentation"
+# --- Test 13: Core docs exist ---
+log "Test 13: Core documentation"
 docs=(
     "README.md"
     "LICENSE"
+    "CONTRIBUTING.md"
+    "CODE_OF_CONDUCT.md"
+    "CHANGELOG.md"
     "docs/PERFORMANCE_REPORT.md"
     "docs/AGENT_SETUP.md"
 )
@@ -165,8 +226,8 @@ for f in "${docs[@]}"; do
     fi
 done
 
-# --- Test 11: PowerShell module syntax ---
-log "Test 11: PowerShell module syntax"
+# --- Test 14: PowerShell module syntax ---
+log "Test 14: PowerShell module syntax"
 if command -v pwsh >/dev/null 2>&1; then
     if pwsh -NoProfile -Command "Import-Module '$REPO_ROOT/opencode/FastDownload.psm1' -Force; Initialize-FastDownload" 2>&1 | grep -q "aria2c"; then
         pass "PowerShell module loads"

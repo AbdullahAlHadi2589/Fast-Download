@@ -1,0 +1,67 @@
+# Winget manifest for fast-download
+# Submit to: https://github.com/microsoft/winget-pkgs
+# Path: manifests/f/fast-download/fast-download/1.0.0/fast-download.yaml
+
+PackageIdentifier: AbdullahAlHadi.fast-download
+PackageVersion: 1.0.0
+PackageName: fast-download
+Publisher: Abdullah Al Hadi
+License: MIT
+LicenseUrl: https://github.com/AbdullahAlHadi/fast-download/blob/main/LICENSE
+Copyright: Copyright (c) 2026 Abdullah Al Hadi
+ShortDescription: Universal download accelerator for AI coding agents
+Description: |
+  fast-download is a universal download accelerator that brings aria2's multi-connection
+  download power to all AI coding agents. It provides:
+  - aria2-powered 16 parallel connection downloads with auto-resume
+  - Git shallow clones (--depth 1 --filter=blob:none) for 90% less bandwidth
+  - Built-in SHA256/MD5 checksum verification
+  - Smart fallbacks for rate-limited servers
+  - Optimized configs for git, npm, pip
+  - Support for 10+ AI coding agents
+Moniker: fast-download
+Tags:
+  - download
+  - accelerator
+  - aria2
+  - git
+  - shallow-clone
+  - checksum
+  - ai-agent
+  - opencode
+  - claude-code
+  - codex
+  - continue
+  - cline
+  - vscode
+  - cursor
+  - windsurf
+  - jetbrains
+  - amazon-q
+  - warp
+
+Installers:
+  - Architecture: x64
+    InstallerType: zip
+    InstallerUrl: https://github.com/AbdullahAlHadi/fast-download/releases/download/v1.0.0/fast-download-v1.0.0-windows.zip
+    InstallerSha256: REPLACE_WITH_ACTUAL_SHA256
+    Scope: user
+    InstallModes:
+      - silent
+    Commands:
+      - fast-download-install
+    UpgradeBehavior: install
+
+  - Architecture: arm64
+    InstallerType: zip
+    InstallerUrl: https://github.com/AbdullahAlHadi/fast-download/releases/download/v1.0.0/fast-download-v1.0.0-windows.zip
+    InstallerSha256: REPLACE_WITH_ACTUAL_SHA256
+    Scope: user
+    InstallModes:
+      - silent
+    Commands:
+      - fast-download-install
+    UpgradeBehavior: install
+
+ManifestType: singleton
+ManifestVersion: 1.6.0

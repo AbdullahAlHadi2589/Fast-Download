@@ -158,7 +158,7 @@ if (-not $SkipPipConfig) {
 # 7. Deploy agent configurations
 $agents = @()
 if ($Agent -eq 'all') {
-    $agents = 'opencode','claude-code','codex','continue','cline','vscode'
+    $agents = 'opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp'
 } else {
     $agents = $Agent
 }
@@ -220,6 +220,52 @@ foreach ($a in $agents) {
                 Write-Log "VS Code skill deployed to $target" 'Success'
             }
         }
+        'cursor' {
+            $target = "$env:USERPROFILE\.cursor\extensions\fast-download"
+            $source = "$repoRoot\vscode\fast-download"
+            if (Test-Path $source) {
+                Copy-Item $source $target -Recurse -Force
+                Write-Log "Cursor skill deployed to $target" 'Success'
+            }
+        }
+        'windsurf' {
+            $target = "$env:USERPROFILE\.windsurf\extensions\fast-download"
+            $source = "$repoRoot\vscode\fast-download"
+            if (Test-Path $source) {
+                Copy-Item $source $target -Recurse -Force
+                Write-Log "Windsurf skill deployed to $target" 'Success'
+            }
+        }
+        'jetbrains' {
+            $target = "$env:APPDATA\JetBrains\ai\agents\fast-download.md"
+            $source = "$repoRoot\claude-code\fast-download.md"
+            $dir = Split-Path $target -Parent
+            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            if (Test-Path $source) {
+                Copy-Item $source $target -Force
+                Write-Log "JetBrains AI agent deployed to $target" 'Success'
+            }
+        }
+        'amazon-q' {
+            $target = "$env:USERPROFILE\.aws\amazonq\agents\fast-download.md"
+            $source = "$repoRoot\claude-code\fast-download.md"
+            $dir = Split-Path $target -Parent
+            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            if (Test-Path $source) {
+                Copy-Item $source $target -Force
+                Write-Log "Amazon Q agent deployed to $target" 'Success'
+            }
+        }
+        'warp' {
+            $target = "$env:USERPROFILE\.warp\agents\fast-download.yaml"
+            $source = "$repoRoot\continue\fast-download.yaml"
+            $dir = Split-Path $target -Parent
+            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            if (Test-Path $source) {
+                Copy-Item $source $target -Force
+                Write-Log "Warp agent deployed to $target" 'Success'
+            }
+        }
     }
 }
 
@@ -254,8 +300,11 @@ Write-Log "  3. Use in any terminal:" 'Info'
 Write-Log '     aria2c -x 16 -s 16 -o "file.zip" "https://url/file.zip"' 'Info'
 Write-Log '     git clone --depth 1 --filter=blob:none https://github.com/user/repo.git' 'Info'
 Write-Log "" 'Info'
-Write-Log "PowerShell module: Import-Module $InstallDir\FastDownload.psm1" 'Info'
-Write-Log "Bash/WSL: source $InstallDir\fast-download.sh" 'Info'
+Write-Log "Shell libraries installed:" 'Info'
+Write-Log "  PowerShell: Import-Module $InstallDir\FastDownload.psm1" 'Info'
+Write-Log "  Bash/WSL:   source $InstallDir\fast-download.sh" 'Info'
+Write-Log "  Fish:       source $InstallDir\fast-download.fish" 'Info'
+Write-Log "  Nushell:    source $InstallDir\fast-download.nu" 'Info'
 Write-Log "" 'Info'
 Write-Log "Agent configs deployed:" 'Info'
 foreach ($a in $agents) {

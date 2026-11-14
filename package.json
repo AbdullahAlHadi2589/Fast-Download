@@ -1,16 +1,16 @@
 {
-  "name": "@fast-download/cli",
+  "name": "fast-download",
   "version": "1.0.0",
-  "description": "Universal download accelerator for AI coding agents - aria2, Git shallow clones, checksum verification",
+  "description": "Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification",
   "license": "MIT",
-  "author": "fast-download contributors",
-  "homepage": "https://github.com/yourusername/fast-download",
+  "author": "Abdullah Al Hadi <abdullahalhadi@proton.me>",
+  "homepage": "https://github.com/AbdullahAlHadi/fast-download",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/fast-download.git"
+    "url": "https://github.com/AbdullahAlHadi/fast-download.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/fast-download/issues"
+    "url": "https://github.com/AbdullahAlHadi/fast-download/issues"
   },
   "keywords": [
     "download",
@@ -25,7 +25,12 @@
     "codex",
     "continue",
     "cline",
-    "vscode"
+    "vscode",
+    "cursor",
+    "windsurf",
+    "jetbrains",
+    "amazon-q",
+    "warp"
   ],
   "bin": {
     "fast-download": "scripts/fast-download.js"
@@ -39,9 +44,18 @@
     "continue/",
     "cline/",
     "vscode/",
+    "cursor/",
+    "windsurf/",
+    "jetbrains/",
+    "amazon-q/",
+    "warp/",
+    "packaging/",
     "docs/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CONTRIBUTING.md",
+    "CODE_OF_CONDUCT.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "install": "node scripts/install.js",

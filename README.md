@@ -1,10 +1,28 @@
 # fast-download
 
-> **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, and any shell.
+> **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, Warp, and any shell.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/yourusername/fast-download)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/AbdullahAlHadi/fast-download)
 [![Download: aria2](https://img.shields.io/badge/Powered%20by-aria2-green)](https://aria2.github.io/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/AbdullahAlHadi/fast-download/ci.yml?branch=main&logo=github)](https://github.com/AbdullahAlHadi/fast-download/actions)
+[![Release](https://img.shields.io/github/v/release/AbdullahAlHadi/fast-download?logo=github)](https://github.com/AbdullahAlHadi/fast-download/releases)
+[![Downloads](https://img.shields.io/github/downloads/AbdullahAlHadi/fast-download/total?logo=github)](https://github.com/AbdullahAlHadi/fast-download/releases)
+[![Stars](https://img.shields.io/github/stars/AbdullahAlHadi/fast-download?style=social)](https://github.com/AbdullahAlHadi/fast-download/stargazers)
+[![Forks](https://img.shields.io/github/forks/AbdullahAlHadi/fast-download?style=social)](https://github.com/AbdullahAlHadi/fast-download/network)
+[![Issues](https://img.shields.io/github/issues/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download/issues)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/AbdullahAlHadi/fast-download/blob/main/CONTRIBUTING.md)
+[![Code Size](https://img.shields.io/github/languages/code-size/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download)
+[![Top Language](https://img.shields.io/github/languages/top/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download)
+[![Last Commit](https://img.shields.io/github/last-commit/AbdullahAlHadi/fast-download)](https://github.com/AbdullahAlHadi/fast-download/commits/main)
+
+---
+
+## 🎬 Demo
+
+![fast-download demo](docs/demo.gif)
+
+*Left: `aria2c -x 16` (39 MB/s) — Right: `curl` (5 MB/s) — Same file, same connection*
 
 ---
 
@@ -51,14 +69,14 @@ Your internet is fast. Your AI agent's downloads are slow.
 
 ## Quick Install
 
-### One-liner (PowerShell)
+### One-liner (PowerShell) — Windows
 ```powershell
-irm https://raw.githubusercontent.com/yourusername/fast-download/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
 ```
 
-### One-liner (Bash/WSL/macOS/Linux)
+### One-liner (Bash) — Linux/macOS/WSL
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yourusername/fast-download/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
 ```
 
 ### Manual
@@ -70,15 +88,28 @@ curl -fsSL https://raw.githubusercontent.com/yourusername/fast-download/main/scr
 
 ## Supported Agents
 
-| Agent | Config Location | Install Method |
-|-------|----------------|----------------|
-| **OpenCode** | `~/.config/opencode/skill/fast-download/` | Auto-discovered |
-| **Claude Code** | `~/.claude/agents/fast-download.md` | `--agent` flag |
-| **Codex** | `~/.codex/agents/fast-download.md` | Auto-loaded |
-| **Continue** | `~/.continue/agents/fast-download.yaml` | Config YAML |
-| **Cline** | `~/.cline/skills/fast-download/` | Skill folder |
-| **VS Code (Copilot)** | `.vscode/fast-download/` | Workspace skill |
-| **Any Shell** | `~/.fast-download/` | Source `fast-download.sh` |
+| Agent | Config Location | Install Method | Status |
+|-------|----------------|----------------|--------|
+| **OpenCode** | `~/.config/opencode/skill/fast-download/` | Auto-discovered | ✅ |
+| **Claude Code** | `~/.claude/agents/fast-download.md` | `--agent` flag | ✅ |
+| **GitHub Copilot (VS Code)** | `~/.vscode/extensions/fast-download/` | Workspace skill | ✅ |
+| **Cursor** | `~/.cursor/extensions/fast-download/` | Same as VS Code | ✅ |
+| **Windsurf** | `~/.windsurf/extensions/fast-download/` | Same as VS Code | ✅ |
+| **OpenAI Codex** | `~/.codex/agents/fast-download.md` | Auto-loaded | ✅ |
+| **Continue** | `~/.continue/agents/fast-download.yaml` | Config YAML | ✅ |
+| **Cline** | `~/.cline/skills/fast-download/` | Skill folder | ✅ |
+| **JetBrains AI** | `~/.config/JetBrains/ai/agents/fast-download.md` | Settings → AI Assistant | ✅ |
+| **Amazon Q Developer** | `~/.aws/amazonq/agents/fast-download.md` | CLI: `amazonq agent install` | ✅ |
+| **Warp** | `~/.warp/agents/fast-download.yaml` | Settings → AI → Agents | ✅ |
+| **Any Shell** | `~/.fast-download/` | Source `fast-download.sh` | ✅ |
+| **Google Jules** | *Not yet supported* | No public API | 🔄 |
+| **Gemini Code Assist** | *Not yet supported* | No public API | 🔄 |
+| **Replit Agent** | *Not yet supported* | No public API | 🔄 |
+| **Tabnine** | *Not yet supported* | No public API | 🔄 |
+| **Mistral Vibe** | *Not yet supported* | No public API | 🔄 |
+| **Kilo Code** | *Not yet supported* | No public API | 🔄 |
+| **Devin** | *Not yet supported* | No public API | 🔄 |
+| **Pi** | *Not yet supported* | No public API | 🔄 |
 
 ---
 
@@ -86,7 +117,7 @@ curl -fsSL https://raw.githubusercontent.com/yourusername/fast-download/main/scr
 
 After install, just use these patterns in **any terminal**:
 
-### Download large files (HTTP/HTTPS)
+### Download large files (HTTP/HTTPS/FTP)
 ```bash
 # Preferred: aria2 with 16 connections, resume, verification
 aria2c -x 16 -s 16 -k 1M --continue=true -o "file.zip" "https://example.com/file.zip"
@@ -106,7 +137,7 @@ curl -L -C - -o "file.zip" "https://example.com/file.zip"
 # Shallow clone (preferred - 90% less data, 4× faster)
 git clone --depth 1 --single-branch --filter=blob:none https://github.com/user/repo.git
 
-# Full clone (when history needed)
+# Full clone (when history required)
 git clone https://github.com/user/repo.git
 
 # Specific branch, shallow
@@ -127,6 +158,19 @@ Invoke-GitClone -Url "https://github.com/user/repo.git" -OutputPath "C:\Projects
 Test-FileChecksum -FilePath "file.zip" -ExpectedHash "abc123..." -Algorithm SHA256
 ```
 
+### Universal Shell Library (Any POSIX Shell)
+```bash
+# Source once
+source ~/.fast-download/fast-download.sh
+
+# Then use:
+fd_download "https://example.com/file.zip" "~/Downloads/file.zip" "sha256:abc123..."
+fd_git_clone "https://github.com/user/repo.git" "~/Projects/repo" true
+fd_verify "file.zip" "abc123..."
+fd_speed_test
+fd_init  # Apply git/npm/pip optimizations
+```
+
 ---
 
 ## How It Works
@@ -140,15 +184,15 @@ Test-FileChecksum -FilePath "file.zip" -ExpectedHash "abc123..." -Algorithm SHA2
                               ▼
 ┌────────────────────────────────────────────────────────────┐
 │  Is it a Git URL?                                           │
-│  ├── YES → git clone --depth 1 (shallow)                   │
+│  ├── YES → git clone --depth 1 --filter=blob:none          │
 │  └── NO  → Continue                                         │
 └────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌────────────────────────────────────────────────────────────┐
 │  File > 10MB AND server supports Range requests?           │
-│  ├── YES → aria2 -x 16 -s 16 (16 parallel connections)    │
-│  ├── NO (rate-limited) → aria2 -x 4 -s 4 OR curl -C -     │
+│  ├── YES → aria2c -x 16 -s 16 (16 parallel connections)    │
+│  ├── NO (rate-limited) → aria2c -x 4 -s 4 OR curl -C -     │
 │  └── Small file (<10MB) → curl (lower overhead)            │
 └────────────────────────────────────────────────────────────┘
                               │
@@ -170,33 +214,57 @@ Test-FileChecksum -FilePath "file.zip" -ExpectedHash "abc123..." -Algorithm SHA2
 
 ```
 fast-download/
-├── .github/workflows/       # CI/CD for testing & releases
-├── opencode/                # OpenCode skill (auto-discovered)
+├── .github/
+│   ├── workflows/
+│   │   ├── ci.yml              # Cross-platform CI
+│   │   └── release.yml         # Automated releases
+│   ├── ISSUE_TEMPLATE/         # Bug report, feature request
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   ├── CODEOWNERS
+│   ├── SECURITY.md
+│   ├── FUNDING.yml
+│   └── dependabot.yml
+├── src/
+│   └── fast-download.sh        # Universal shell library
+├── opencode/                   # OpenCode skill
 │   ├── skill.json
 │   ├── instructions.md
 │   ├── FastDownload.psm1
-│   └── test-skill.ps1
-├── claude-code/             # Claude Code agent
+│   ├── test-skill.ps1
+│   └── references/download-methods.md
+├── claude-code/                # Claude Code agent
 │   └── fast-download.md
-├── codex/                   # OpenAI Codex agent
+├── codex/                      # OpenAI Codex agent
 │   └── fast-download.md
-├── continue/                # Continue.dev agent
+├── continue/                   # Continue.dev agent
 │   └── fast-download.yaml
-├── cline/                   # Cline skill
-│   └── fast-download/
-├── vscode/                  # VS Code Copilot skill
+├── cline/                      # Cline skill
+│   ├── skill.json
+│   └── instructions.md
+├── vscode/                     # VS Code / Cursor / Windsurf
 │   └── fast-download/
 ├── scripts/
-│   ├── install.ps1          # Windows installer
-│   ├── install.sh           # Unix installer
-│   └── uninstall.ps1
+│   ├── install.ps1             # Windows installer
+│   ├── install.sh              # Unix installer
+│   ├── uninstall.ps1           # Windows uninstaller
+│   ├── uninstall.sh            # Unix uninstaller
+│   ├── test.sh                 # Test suite
+│   └── create-demo.sh          # Demo GIF creator
+├── packaging/
+│   ├── homebrew/               # Homebrew formula
+│   ├── chocolatey/             # Chocolatey package
+│   ├── winget/                 # Winget manifest
+│   ├── scoop/                  # Scoop manifest
+│   └── aur/                    # AUR PKGBUILD
 ├── docs/
 │   ├── PERFORMANCE_REPORT.md
-│   └── AGENT_SETUP.md
-├── src/
-│   └── fast-download.sh     # Universal shell library
+│   ├── AGENT_SETUP.md
+│   └── demo.gif
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── CODE_OF_CONDUCT.md
 ├── LICENSE
-├── package.json             # For npm publishing
+├── package.json
 └── README.md
 ```
 
@@ -227,6 +295,16 @@ pip config set global.retries 5
 pip config set global.timeout 60
 ```
 
+### Environment Variables
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FD_ARIA2_CONNECTIONS` | 16 | Parallel connections for aria2 |
+| `FD_ARIA2_SPLIT` | 16 | Number of splits |
+| `FD_ARIA2_MIN_SPLIT_SIZE` | 1M | Minimum split size |
+| `FD_CURL_RETRIES` | 5 | curl retry count |
+| `FD_CURL_RETRY_DELAY` | 3 | curl retry delay (seconds) |
+| `FD_GIT_SHALLOW` | true | Default to shallow clones |
+
 ---
 
 ## Troubleshooting
@@ -243,16 +321,33 @@ pip config set global.timeout 60
 
 ## Contributing
 
-1. Fork the repo
-2. Create feature branch: `git checkout -b feature/amazing`
-3. Test with: `./scripts/test-all-agents.sh`
-4. Submit PR
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+### Quick Start
+```bash
+git clone https://github.com/AbdullahAlHadi/fast-download.git
+cd fast-download
+# Make your changes
+./scripts/test.sh  # Run tests
+# Submit PR
+```
+
+### Areas for Contribution
+- 🐛 Bug fixes
+- ✨ New agent integrations
+- 📦 Package manager submissions (Homebrew, Chocolatey, Winget, Scoop, AUR)
+- 📚 Documentation improvements
+- 🧪 Test coverage
+- 🎨 Demo GIF updates
+- 🌐 Translations
 
 ---
 
 ## License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+**Author:** Abdullah Al Hadi
 
 ---
 
@@ -261,6 +356,16 @@ MIT License — see [LICENSE](LICENSE) for details.
 - [aria2](https://aria2.github.io/) — The download accelerator that makes this possible
 - [Git](https://git-scm.com/) — Shallow clone optimization
 - All the AI agent platforms for extensibility
+- Contributors: [See GitHub](https://github.com/AbdullahAlHadi/fast-download/graphs/contributors)
+
+---
+
+## Support
+
+- 🐛 [Report a bug](https://github.com/AbdullahAlHadi/fast-download/issues/new?template=bug_report.md)
+- 💡 [Request a feature](https://github.com/AbdullahAlHadi/fast-download/issues/new?template=feature_request.md)
+- 💬 [Discussions](https://github.com/AbdullahAlHadi/fast-download/discussions)
+- ⭐ Star this repo if it helped you!
 
 ---
 

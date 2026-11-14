@@ -9,10 +9,10 @@ Complete installation instructions for each supported AI coding agent.
 Run the universal installer:
 ```bash
 # Windows (PowerShell)
-irm https://raw.githubusercontent.com/yourusername/fast-download/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
 
 # Linux/macOS/WSL (Bash)
-curl -fsSL https://raw.githubusercontent.com/yourusername/fast-download/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
 ```
 
 Or install manually per agent below.
@@ -29,6 +29,7 @@ Or install manually per agent below.
 | Ubuntu/Debian | `sudo apt install aria2` |
 | Fedora | `sudo dnf install aria2` |
 | Arch | `sudo pacman -S aria2` |
+| openSUSE | `sudo zypper install aria2` |
 
 ### Install Git
 | Platform | Command |
@@ -36,6 +37,8 @@ Or install manually per agent below.
 | Windows | `winget install Git.Git` |
 | macOS | `brew install git` |
 | Ubuntu/Debian | `sudo apt install git` |
+| Fedora | `sudo dnf install git` |
+| Arch | `sudo pacman -S git` |
 
 ### Verify
 ```bash
@@ -45,129 +48,173 @@ git --version
 
 ---
 
-## OpenCode
+## Supported Agents
 
-### Auto-install (Recommended)
+| Agent | Config Type | Config Location | Status |
+|-------|-------------|-----------------|--------|
+| **OpenCode** | Skill | `~/.config/opencode/skill/fast-download/` | ✅ |
+| **Claude Code** | Agent | `~/.claude/agents/fast-download.md` | ✅ |
+| **GitHub Copilot (VS Code)** | Extension/Skill | `~/.vscode/extensions/fast-download/` | ✅ |
+| **Cursor** | Extension/Skill | `~/.cursor/extensions/fast-download/` | ✅ |
+| **Windsurf** | Extension/Skill | `~/.windsurf/extensions/fast-download/` | ✅ |
+| **OpenAI Codex** | Agent | `~/.codex/agents/fast-download.md` | ✅ |
+| **Continue** | Agent | `~/.continue/agents/fast-download.yaml` | ✅ |
+| **Cline** | Skill | `~/.cline/skills/fast-download/` | ✅ |
+| **JetBrains AI** | Agent | `~/.config/JetBrains/ai/agents/fast-download.md` | ✅ |
+| **Amazon Q Developer** | Agent | `~/.aws/amazonq/agents/fast-download.md` | ✅ |
+| **Warp** | Agent | `~/.warp/agents/fast-download.yaml` | ✅ |
+| **Universal Shell** | Library | `~/.fast-download/fast-download.sh` | ✅ |
+
+### Not Yet Supported (No Public API)
+- Google Jules / Gemini Code Assist
+- Replit Agent
+- Tabnine
+- Mistral Vibe
+- Kilo Code
+- Devin
+- Pi
+
+---
+
+## Installation Methods
+
+### Method 1: Universal Installer (Recommended)
+
+#### Windows (PowerShell)
 ```powershell
-# Run installer with OpenCode only
-.\scripts\install.ps1 -Agent opencode
+# Install everything
+irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex
+
+# Install specific agents only
+irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex -Agent opencode,claude-code,vscode
+
+# Skip certain components
+irm https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.ps1 | iex -SkipAria2 -SkipGitConfig
 ```
 
-### Manual Install
-1. Copy `opencode/` folder to OpenCode skill directory:
-   - **Windows**: `%APPDATA%\opencode\skill\fast-download\`
-   - **Linux/macOS**: `~/.config/opencode/skill/fast-download/`
-
-2. Restart OpenCode
-
-### Verify
-In OpenCode shell:
+#### Linux/macOS/WSL (Bash)
 ```bash
-aria2c -x 16 -s 16 -o test.zip "https://example.com/file.zip"
+# Install everything
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
+
+# Install specific agents only
+curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash -s -- opencode claude-code vscode
+
+# Skip certain components
+SKIP_ARIA2=true SKIP_GIT_CONFIG=true curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi/fast-download/main/scripts/install.sh | bash
 ```
 
----
+### Method 2: Package Managers
 
-## Claude Code
-
-### Auto-install
 ```bash
-./scripts/install.sh claude-code
+# Homebrew (macOS/Linux)
+brew install AbdullahAlHadi/tap/fast-download
+
+# Chocolatey (Windows)
+choco install fast-download
+
+# Winget (Windows)
+winget install AbdullahAlHadi.fast-download
+
+# Scoop (Windows)
+scoop bucket add fast-download https://github.com/AbdullahAlHadi/fast-download
+scoop install fast-download
+
+# AUR (Arch Linux)
+yay -S fast-download
+
+# npm (any platform)
+npx fast-download
 ```
 
-### Manual Install
-1. Copy `claude-code/fast-download.md` to:
-   - **All platforms**: `~/.claude/agents/fast-download.md`
+### Method 3: Manual Installation
 
-2. Use in Claude Code:
-   ```bash
-   # In Claude Code chat
-   /agent fast-download
-   ```
-
-### Verify
-Agent appears in `/agent` list.
-
----
-
-## Codex (OpenAI)
-
-### Auto-install
+#### OpenCode
 ```bash
-./scripts/install.sh codex
+# Copy skill folder
+mkdir -p ~/.config/opencode/skill/fast-download
+cp -r opencode/* ~/.config/opencode/skill/fast-download/
+
+# Restart OpenCode
 ```
 
-### Manual Install
-1. Copy `codex/fast-download.md` to:
-   - **All platforms**: `~/.codex/agents/fast-download.md`
-
-2. Restart Codex
-
-### Verify
-Agent auto-loads for download tasks.
-
----
-
-## Continue.dev
-
-### Auto-install
+#### Claude Code
 ```bash
-./scripts/install.sh continue
+# Copy agent file
+mkdir -p ~/.claude/agents
+cp claude-code/fast-download.md ~/.claude/agents/fast-download.md
+
+# Use in chat: /agent fast-download
 ```
 
-### Manual Install
-1. Copy `continue/fast-download.yaml` to:
-   - **All platforms**: `~/.continue/agents/fast-download.yaml`
-
-2. Add to `~/.continue/config.yaml`:
-   ```yaml
-   agents:
-     - name: fast-download
-       file: ~/.continue/agents/fast-download.yaml
-   ```
-
-3. Restart Continue
-
-### Verify
-Agent appears in Continue sidebar.
-
----
-
-## Cline
-
-### Auto-install
+#### GitHub Copilot / Cursor / Windsurf (VS Code)
 ```bash
-./scripts/install.sh cline
+# Copy extension folder
+mkdir -p ~/.vscode/extensions/fast-download
+cp -r vscode/fast-download/* ~/.vscode/extensions/fast-download/
+
+# Reload VS Code: Ctrl+Shift+P → Developer: Reload Window
+# Run tasks: Terminal → Run Task → fast-download: aria2
 ```
 
-### Manual Install
-1. Copy `cline/fast-download/` folder to:
-   - **Windows**: `%USERPROFILE%\.cline\skills\fast-download\`
-   - **Linux/macOS**: `~/.cline/skills/fast-download/`
+#### OpenAI Codex
+```bash
+# Copy agent file
+mkdir -p ~/.codex/agents
+cp codex/fast-download.md ~/.codex/agents/fast-download.md
 
-2. In Cline: Skills → fast-download → Enable
-
-### Verify
-Skill appears in Cline skills panel.
-
----
-
-## VS Code (GitHub Copilot)
-
-### Auto-install
-```powershell
-.\scripts\install.ps1 -Agent vscode
+# Restart Codex
 ```
 
-### Manual Install
-1. Copy `vscode/fast-download/` to:
-   - **Windows**: `%USERPROFILE%\.vscode\extensions\fast-download\`
-   - **Linux/macOS**: `~/.vscode/extensions/fast-download/`
+#### Continue
+```bash
+# Copy agent file
+mkdir -p ~/.continue/agents
+cp continue/fast-download.yaml ~/.continue/agents/fast-download.yaml
 
-2. Reload VS Code (Ctrl+Shift+P → Developer: Reload Window)
+# Add to ~/.continue/config.yaml:
+# agents:
+#   - name: fast-download
+#     file: ~/.continue/agents/fast-download.yaml
 
-### Verify
-Run tasks: Terminal → Run Task → `fast-download: aria2`
+# Restart Continue
+```
+
+#### Cline
+```bash
+# Copy skill folder
+mkdir -p ~/.cline/skills/fast-download
+cp -r cline/fast-download/* ~/.cline/skills/fast-download/
+
+# In Cline: Skills → fast-download → Enable
+```
+
+#### JetBrains AI
+```bash
+# Copy agent file
+mkdir -p ~/.config/JetBrains/ai/agents
+cp claude-code/fast-download.md ~/.config/JetBrains/ai/agents/fast-download.md
+
+# Settings → AI Assistant → Agents → fast-download
+```
+
+#### Amazon Q Developer
+```bash
+# Copy agent file
+mkdir -p ~/.aws/amazonq/agents
+cp claude-code/fast-download.md ~/.aws/amazonq/agents/fast-download.md
+
+# CLI: amazonq agent install
+```
+
+#### Warp
+```bash
+# Copy agent file
+mkdir -p ~/.warp/agents
+cp continue/fast-download.yaml ~/.warp/agents/fast-download.yaml
+
+# Settings → AI → Agents
+```
 
 ---
 
@@ -175,15 +222,27 @@ Run tasks: Terminal → Run Task → `fast-download: aria2`
 
 ### Install
 ```bash
-# Copy the shell library
+# Copy the shell libraries
 mkdir -p ~/.fast-download
 cp src/fast-download.sh ~/.fast-download/
+cp src/fast-download.fish ~/.fast-download/
+cp src/fast-download.nu ~/.fast-download/
 
 # Add to shell RC
-echo 'source ~/.fast-download/fast-download.sh' >> ~/.bashrc  # or .zshrc
+# Bash
+echo 'source ~/.fast-download/fast-download.sh' >> ~/.bashrc
+
+# Zsh
+echo 'source ~/.fast-download/fast-download.sh' >> ~/.zshrc
+
+# Fish
+echo 'source ~/.fast-download/fast-download.fish' >> ~/.config/fish/config.fish
+
+# Nushell
+echo 'source ~/.fast-download/fast-download.nu' >> ~/.config/nushell/config.nu
 
 # Reload
-source ~/.bashrc
+source ~/.bashrc  # or ~/.zshrc, etc.
 ```
 
 ### Usage
@@ -193,6 +252,7 @@ fd_download "https://example.com/file.zip" "~/Downloads/file.zip" "sha256:abc123
 fd_git_clone "https://github.com/user/repo.git" "~/Projects/repo" true
 fd_verify "file.zip" "abc123..."
 fd_speed_test
+fd_init  # Apply git/npm/pip optimizations
 ```
 
 ---
@@ -314,17 +374,38 @@ rm -rf ~/.cline/skills/fast-download
 # VS Code
 rm -rf ~/.vscode/extensions/fast-download
 
+# Cursor
+rm -rf ~/.cursor/extensions/fast-download
+
+# Windsurf
+rm -rf ~/.windsurf/extensions/fast-download
+
+# JetBrains AI
+rm ~/.config/JetBrains/ai/agents/fast-download.md
+
+# Amazon Q
+rm ~/.aws/amazonq/agents/fast-download.md
+
+# Warp
+rm ~/.warp/agents/fast-download.yaml
+
 # Shell
 rm -rf ~/.fast-download
-# Remove from .bashrc/.zshrc
+# Remove from .bashrc/.zshrc/.config/fish/config.fish
 ```
 
 ### Full Uninstall (Windows)
 ```powershell
 .\scripts\uninstall.ps1
+
+# With config revert
+.\scripts\uninstall.ps1 -RevertConfigs
 ```
 
 ### Full Uninstall (Unix)
 ```bash
 ./scripts/uninstall.sh
+
+# With config revert
+REVERT_CONFIGS=true ./scripts/uninstall.sh
 ```
