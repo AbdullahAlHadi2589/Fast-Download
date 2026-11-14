@@ -1,4 +1,8 @@
+<div align="center">
+
 # Fast-Download
+
+</div>
 
 <div align="center">
   <img src="assets/logo.png" alt="fast-download logo" width="50%">
@@ -80,35 +84,28 @@ curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/ma
 
 ### Manual
 1. Install aria2: `winget install aria2.aria2` / `brew install aria2` / `apt install aria2`
-2. Copy the agent config for your tool (see below)
-3. Restart your agent
+2. Clone the repo or copy the relevant agent folder (see table above)
+3. Place files in your agent's config location
+4. Restart your agent
 
 ---
 
 ## Supported Agents
 
-| Agent | Config Location | Install Method | Status |
-|-------|----------------|----------------|--------|
-| **OpenCode** | `~/.config/opencode/skill/fast-download/` | Auto-discovered | ✅ |
-| **Claude Code** | `~/.claude/agents/fast-download.md` | `--agent` flag | ✅ |
-| **GitHub Copilot (VS Code)** | `~/.vscode/extensions/fast-download/` | Workspace skill | ✅ |
-| **Cursor** | `~/.cursor/extensions/fast-download/` | Same as VS Code | ✅ |
-| **Windsurf** | `~/.windsurf/extensions/fast-download/` | Same as VS Code | ✅ |
-| **OpenAI Codex** | `~/.codex/agents/fast-download.md` | Auto-loaded | ✅ |
-| **Continue** | `~/.continue/agents/fast-download.yaml` | Config YAML | ✅ |
-| **Cline** | `~/.cline/skills/fast-download/` | Skill folder | ✅ |
-| **JetBrains AI** | `~/.config/JetBrains/ai/agents/fast-download.md` | Settings → AI Assistant | ✅ |
-| **Amazon Q Developer** | `~/.aws/amazonq/agents/fast-download.md` | CLI: `amazonq agent install` | ✅ |
-| **Warp** | `~/.warp/agents/fast-download.yaml` | Settings → AI → Agents | ✅ |
-| **Any Shell** | `~/.fast-download/` | Source `fast-download.sh` | ✅ |
-| **Google Jules** | *Not yet supported* | No public API | 🔄 |
-| **Gemini Code Assist** | *Not yet supported* | No public API | 🔄 |
-| **Replit Agent** | *Not yet supported* | No public API | 🔄 |
-| **Tabnine** | *Not yet supported* | No public API | 🔄 |
-| **Mistral Vibe** | *Not yet supported* | No public API | 🔄 |
-| **Kilo Code** | *Not yet supported* | No public API | 🔄 |
-| **Devin** | *Not yet supported* | No public API | 🔄 |
-| **Pi** | *Not yet supported* | No public API | 🔄 |
+| Agent | Config Location in Repo | Install Method | Status |
+|-------|------------------------|----------------|--------|
+| **OpenCode** | `opencode/SKILL.md` | Auto-discovered from `~/.config/opencode/skill/fast-download/` | ✅ |
+| **Claude Code** | `claude-code/fast-download.md` | Place in `~/.claude/agents/` folder | ✅ |
+| **Cursor** | `cursor/fast-download/.cursorrules` | Add `.cursorrules` to project root | ✅ |
+| **Cline** | `cline/fast-download/.clinerules` | Add `.clinerules` to project root | ✅ |
+| **Windsurf** | `windsurf/fast-download/.windsurfrules` | Add `.windsurfrules` to project root | ✅ |
+| **VS Code (Extension)** | `vscode/fast-download/package.json` | Run `code --install-extension fast-download` (when published) | ✅ |
+| **JetBrains AI** | `jetbrains/plugin.xml` + `fast-download.md` | Install plugin or use markdown instructions | ✅ |
+| **OpenAI Codex** | `codex/fast-download.md` | Place in `~/.codex/agents/` folder | ✅ |
+| **Continue.dev** | `continue/fast-download.yaml` | Add to `.continue/agents/` config | ✅ |
+| **Amazon Q Developer** | `amazon-q/fast-download.md` | Place in `~/.aws/amazonq/agents/` folder | ✅ |
+| **Warp** | `warp/fast-download.yaml` | Add to `~/.warp/agents/` folder | ✅ |
+| **Any Shell** | `src/fast-download.sh` | Source `~/.fast-download/fast-download.sh` | ✅ |
 
 ---
 
@@ -229,37 +226,64 @@ fast-download/
 │   ├── fast-download.fish      # Fish shell library
 │   └── fast-download.nu        # Nushell library
 ├── opencode/
+│   ├── SKILL.md                # OpenCode skill manifest ⭐
 │   ├── FastDownload.psm1       # PowerShell module
-│   ├── skill.json              # OpenCode skill manifest
-│   └── instructions.md         # Agent instructions
+│   ├── skill.json              # Skill metadata
+│   ├── instructions.md         # Agent instructions
+│   ├── test-skill.ps1          # Test script
+│   └── PERFORMANCE_REPORT.md   # Benchmarks
 ├── claude-code/
 │   └── fast-download.md        # Claude Code agent
 ├── codex/
 │   └── fast-download.md        # OpenAI Codex agent
 ├── continue/
 │   └── fast-download.yaml      # Continue.dev agent
-├── cline/
-│   └── fast-download/          # Cline skill
-├── vscode/
-│   └── fast-download/          # VS Code / Cursor / Windsurf
+├── cline/fast-download/
+│   ├── .clinerules             # Cline rules
+│   ├── skill.json              # Skill metadata
+│   └── instructions.md         # Instructions
+├── cursor/fast-download/
+│   ├── .cursorrules            # Cursor rules
+│   ├── skill.json              # Skill metadata
+│   └── instructions.md         # Instructions
+├── vscode/fast-download/
+│   ├── package.json            # VS Code extension manifest
+│   ├── skill.json              # Skill metadata
+│   └── instructions.md         # Instructions
+├── windsurf/fast-download/
+│   └── .windsurfrules          # Windsurf rules
 ├── jetbrains/
+│   ├── plugin.xml              # JetBrains plugin descriptor
 │   └── fast-download.md        # JetBrains AI agent
 ├── amazon-q/
 │   └── fast-download.md        # Amazon Q agent
 ├── warp/
 │   └── fast-download.yaml      # Warp agent
 ├── scripts/
-│   ├── install.sh              # Bash installer (Linux/macOS/WSL)
 │   ├── install.ps1             # PowerShell installer (Windows)
-│   ├── uninstall.sh            # Uninstaller
-│   └── test.sh                 # Test suite (40+ tests)
+│   ├── install.sh              # Bash installer (Linux/macOS/WSL)
+│   ├── uninstall.ps1           # PowerShell uninstaller
+│   ├── uninstall.sh            # Bash uninstaller
+│   ├── create-demo.sh          # Demo script
+│   ├── fast-download.js        # JS utilities
+│   ├── install.js              # Node installer
+│   └── test.sh                 # Test suite
 ├── packaging/
-│   └── aur/                    # Arch Linux AUR package
+│   └── aur/                    # Arch Linux AUR package (PKGBUILD)
 ├── docs/
 │   ├── AGENT_SETUP.md          # Detailed agent setup guide
 │   └── PERFORMANCE_REPORT.md   # Benchmarks & methodology
 ├── assets/
 │   └── logo.png                # Project logo
+├── .github/                    # GitHub configuration
+│   ├── workflows/              # CI/CD pipelines
+│   │   ├── ci.yml              # Build & test workflow
+│   │   └── release.yml         # Release automation
+│   ├── ISSUE_TEMPLATE/         # Issue templates
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── SECURITY.md
+├── SKILL.md                    # Root skill manifest (OpenCode) ⭐
+├── package.json                # Node.js package config
 ├── README.md                   # This file
 ├── LICENSE                     # License
 ├── CONTRIBUTING.md             # Contribution guide
