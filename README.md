@@ -1,6 +1,8 @@
 # fast-download
 
-
+<div align="center">
+  <img src="assets/logo.png" alt="fast-download logo" width="50%">
+</div>
 
 > **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, Warp, and any shell.
 
@@ -185,164 +187,132 @@ fd_init  # Apply git/npm/pip optimizations
 ┌────────────────────────────────────────────────────────────┐
 │                    DOWNLOAD REQUEST                         │
 └────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────────┐
 │  Is it a Git URL?                                           │
 │  ├── YES → git clone --depth 1 --filter=blob:none          │
 │  └── NO  → Continue                                         │
 └────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
+                               │
+                               ▼
 ┌────────────────────────────────────────────────────────────┐
 │  File > 10MB AND server supports Range requests?           │
 │  ├── YES → aria2c -x 16 -s 16 (16 parallel connections)    │
 │  ├── NO (rate-limited) → aria2c -x 4 -s 4 OR curl -C -     │
-│  └── Small file (<10MB) → curl (lower overhead)            │
-└────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌────────────────────────────────────────────────────────────┐
-│  Verify checksum if provided → Done                         │
+│  └── NO (small/unknown) → curl (lower overhead)            │
 └────────────────────────────────────────────────────────────┘
 ```
 
-### Security First
-- ✅ SSL verification **always enabled** (`--check-certificate=true`)
-- ✅ Checksum verification **supported** (`--checksum=sha256=<hash>`)
-- ✅ No insecure defaults — never disables cert validation for speed
-- ✅ Trusted sources only — assumes HTTPS from known hosts
+### Built-in Verification
+- **SHA256/MD5** checksums validated automatically after every download
+- **Corrupted files deleted** on mismatch — no partial files left behind
+- **Resume support** via `curl -C -` and aria2's built-in continuation
 
----
-
-## Repository Structure
-
-```
-fast-download/
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml              # Cross-platform CI
-│   │   └── release.yml         # Automated releases
-│   ├── ISSUE_TEMPLATE/         # Bug report, feature request
-│   ├── PULL_REQUEST_TEMPLATE.md
-│   ├── CODEOWNERS
-│   └── SECURITY.md
-├── src/
-│   └── fast-download.sh        # Universal shell library
-├── opencode/                   # OpenCode skill
-│   ├── skill.json
-│   ├── instructions.md
-│   ├── FastDownload.psm1
-│   ├── test-skill.ps1
-│   └── references/download-methods.md
-├── claude-code/                # Claude Code agent
-│   └── fast-download.md
-├── codex/                      # OpenAI Codex agent
-│   └── fast-download.md
-├── continue/                   # Continue.dev agent
-│   └── fast-download.yaml
-├── cline/                      # Cline skill
-│   ├── skill.json
-│   └── instructions.md
-├── vscode/                     # VS Code / Cursor / Windsurf
-│   └── fast-download/
-├── scripts/
-│   ├── install.ps1             # Windows installer
-│   ├── install.sh              # Unix installer
-│   ├── uninstall.ps1           # Windows uninstaller
-│   ├── uninstall.sh            # Unix uninstaller
-│   ├── test.sh                 # Test suite
-│   └── create-demo.sh          # Demo GIF creator
-├── packaging/
-│   ├── homebrew/               # Homebrew formula
-│   ├── chocolatey/             # Chocolatey package
-│   ├── winget/                 # Winget manifest
-│   ├── scoop/                  # Scoop manifest
-│   └── aur/                    # AUR PKGBUILD
-├── docs/
-│   ├── PERFORMANCE_REPORT.md
-│   ├── AGENT_SETUP.md
-│   └── demo.gif
-├── CONTRIBUTING.md
-├── CHANGELOG.md
-├── CODE_OF_CONDUCT.md
-├── LICENSE
-├── package.json
-└── README.md
-```
-
----
-
-## Configuration
-
-### Git Optimizations (Applied Automatically)
+### Global Config Optimizations (Opt-in)
 ```bash
+# Git: compression, larger buffers, no low-speed timeouts
 git config --global core.compression 9
-git config --global core.preloadIndex true
-git config --global core.fscache true
 git config --global http.postBuffer 524288000
-git config --global http.lowSpeedLimit 0
-git config --global http.lowSpeedTime 999999
-```
 
-### npm Optimizations
-```bash
+# npm: retries, offline preference
 npm config set fetch-retries 5
-npm config set fetch-retry-factor 2
 npm config set prefer-offline true
-```
 
-### pip Optimizations
-```bash
+# pip: retries, timeout
 pip config set global.retries 5
 pip config set global.timeout 60
 ```
 
-### Environment Variables
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `FD_ARIA2_CONNECTIONS` | 16 | Parallel connections for aria2 |
-| `FD_ARIA2_SPLIT` | 16 | Number of splits |
-| `FD_ARIA2_MIN_SPLIT_SIZE` | 1M | Minimum split size |
-| `FD_CURL_RETRIES` | 5 | curl retry count |
-| `FD_CURL_RETRY_DELAY` | 3 | curl retry delay (seconds) |
-| `FD_GIT_SHALLOW` | true | Default to shallow clones |
+> **Note:** Global configs require explicit opt-in (`APPLY_GLOBAL_CONFIGS=true` / `-ApplyGlobalConfigs`)
 
 ---
 
-## Troubleshooting
+## 📁 Project Structure
 
-| Issue | Fix |
-|-------|-----|
-| `aria2c` not found | Restart shell, or run installer again |
-| 429 Too Many Requests | Use `-x 4 -s 4` or `curl -L -C -` |
-| Resume not working | Server must support `Accept-Ranges: bytes` |
-| Git not in PATH (Windows) | Use full path: `C:\Program Files\Git\bin\git.exe` |
-| Slow GitHub downloads | GitHub CDN limits per-connection; use `-x 4` |
+```
+fast-download/
+├── src/
+│   ├── fast-download.sh        # Universal Bash library
+│   ├── fast-download.fish      # Fish shell library
+│   └── fast-download.nu        # Nushell library
+├── opencode/
+│   ├── FastDownload.psm1       # PowerShell module
+│   ├── skill.json              # OpenCode skill manifest
+│   └── instructions.md         # Agent instructions
+├── claude-code/
+│   └── fast-download.md        # Claude Code agent
+├── codex/
+│   └── fast-download.md        # OpenAI Codex agent
+├── continue/
+│   └── fast-download.yaml      # Continue.dev agent
+├── cline/
+│   └── fast-download/          # Cline skill
+├── vscode/
+│   └── fast-download/          # VS Code / Cursor / Windsurf
+├── jetbrains/
+│   └── fast-download.md        # JetBrains AI agent
+├── amazon-q/
+│   └── fast-download.md        # Amazon Q agent
+├── warp/
+│   └── fast-download.yaml      # Warp agent
+├── scripts/
+│   ├── install.sh              # Bash installer (Linux/macOS/WSL)
+│   ├── install.ps1             # PowerShell installer (Windows)
+│   ├── uninstall.sh            # Uninstaller
+│   └── test.sh                 # Test suite (40+ tests)
+├── packaging/
+│   └── aur/                    # Arch Linux AUR package
+├── docs/
+│   ├── AGENT_SETUP.md          # Detailed agent setup guide
+│   └── PERFORMANCE_REPORT.md   # Benchmarks & methodology
+├── assets/
+│   └── logo.png                # Project logo
+├── README.md                   # This file
+├── LICENSE                     # License
+├── CONTRIBUTING.md             # Contribution guide
+├── CODE_OF_CONDUCT.md          # Code of conduct
+└── CHANGELOG.md                # Version history
+```
+
+---
+
+## Requirements
+
+| Platform | Requirements |
+|----------|--------------|
+| **Windows** | Windows 10/11, PowerShell 5.1+, aria2, Git (optional) |
+| **Linux** | Bash 4+, aria2, curl, Git (optional) |
+| **macOS** | Bash 4+/zsh/fish, aria2, curl, Git (optional) |
+| **WSL** | Same as Linux |
+
+All shell libraries (bash, fish, nushell) and PowerShell module are **dependency-free** — they only call `aria2c`, `curl`, or `git` if available.
+
+---
+
+## Performance
+
+| Metric | Value |
+|--------|-------|
+| Max parallel connections | 16 (aria2) / 4 (rate-limited) |
+| Resume support | ✅ Full (aria2 + curl) |
+| Checksum algorithms | SHA256, MD5 |
+| Git shallow clone | ✅ `--depth=1 --filter=blob:none` |
+| Rate-limit fallback | ✅ Automatic (aria2 → curl) |
+| Zero config | ✅ Works out of the box |
+
+See [PERFORMANCE_REPORT.md](docs/PERFORMANCE_REPORT.md) for detailed benchmarks.
 
 ---
 
 ## Contributing
 
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
-### Quick Start
-```bash
-git clone https://github.com/AbdullahAlHadi2589/Fast-Download.git
-cd fast-download
-# Make your changes
-./scripts/test.sh  # Run tests
-# Submit PR
-```
-
-### Areas for Contribution
-- 🐛 Bug fixes
-- ✨ New agent integrations
-- 📦 Package manager submissions (Homebrew, Chocolatey, Winget, Scoop, AUR)
-- 📚 Documentation improvements
-- 🧪 Test coverage
-- 🎨 Demo GIF updates
-- 🌐 Translations
+1. Fork the repo
+2. Create a feature branch
+3. Run tests: `bash scripts/test.sh`
+4. Submit PR
 
 ---
 
@@ -356,19 +326,6 @@ cd fast-download
 
 ## Credits
 
-- [aria2](https://aria2.github.io/) — The download accelerator that makes this possible
-- [Git](https://git-scm.com/) — Shallow clone optimization
-- Contributors: [See GitHub](https://github.com/AbdullahAlHadi2589/Fast-Download/graphs/contributors)
-
----
-
-## Support
-
-- 🐛 [Report a bug](https://github.com/AbdullahAlHadi2589/Fast-Download/issues/new?template=bug_report.md)
-- 💡 [Request a feature](https://github.com/AbdullahAlHadi2589/Fast-Download/issues/new?template=feature_request.md)
-- 💬 [Discussions](https://github.com/AbdullahAlHadi2589/Fast-Download/discussions)
-- ⭐ Star this repo if it helped you!
-
----
-
-**Made for developers who want their 100% internet speed, everywhere.**
+- [aria2](https://aria2.github.io/) — The powerful download utility that makes this possible
+- [OpenCode](https://opencode.ai/) — For the skill architecture
+- All AI coding agent platforms that support extensibility
