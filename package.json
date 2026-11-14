@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Universal download accelerator for AI coding agents - aria2 multi-connection downloads, Git shallow clones, checksum verification",
   "license": "MIT",
-  "author": "Abdullah Al Hadi <abdullahalhadi@proton.me>",
+  "author": "Abdullah Al Hadi <abdullah.pkg.ctg@gmail.com>",
   "homepage": "https://github.com/AbdullahAlHadi2589/Fast-Download",
   "repository": {
     "type": "git",
