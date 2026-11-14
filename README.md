@@ -1,10 +1,10 @@
 # fast-download
 
-![fast-download logo](assets/logo.png){ width=50% }
+<img src="assets/logo.png" alt="fast-download logo" width="50%">
 
 > **Universal download accelerator for AI coding agents** — aria2-powered multi-connection downloads, Git shallow clones, checksum verification, and smart fallbacks. Works with OpenCode, Claude Code, Codex, Continue, Cline, VS Code, Cursor, Windsurf, JetBrains AI, Amazon Q, Warp, and any shell.
 
-[![License](https://img.shields.io/badge/License-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License](https://img.shields.io/badge/License-blue.svg)](LICENSE)
 [![Platform: Windows](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-blue)](https://github.com/AbdullahAlHadi2589/Fast-Download)
 [![Download: aria2](https://img.shields.io/badge/Powered%20by-aria2-green)](https://aria2.github.io/)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/AbdullahAlHadi2589/Fast-Download/ci.yml?branch=master&logo=github)](https://github.com/AbdullahAlHadi2589/Fast-Download/actions)
