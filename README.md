@@ -221,9 +221,7 @@ fast-download/
 │   ├── ISSUE_TEMPLATE/         # Bug report, feature request
 │   ├── PULL_REQUEST_TEMPLATE.md
 │   ├── CODEOWNERS
-│   ├── SECURITY.md
-│   ├── FUNDING.yml
-│   └── dependabot.yml
+│   └── SECURITY.md
 ├── src/
 │   └── fast-download.sh        # Universal shell library
 ├── opencode/                   # OpenCode skill
