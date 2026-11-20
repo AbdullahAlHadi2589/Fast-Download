@@ -86,10 +86,10 @@ git --version
 irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1 | iex
 
 # Install specific agents only
-irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1 | iex -Agent opencode,claude-code,vscode
+iex "& { $(irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1) } -Agent opencode,claude-code,vscode"
 
 # Skip certain components
-irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1 | iex -SkipAria2 -SkipGitConfig
+iex "& { $(irm https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/master/scripts/install.ps1) } -SkipAria2 -SkipGitConfig"
 ```
 
 #### Linux/macOS/WSL (Bash)
@@ -193,7 +193,7 @@ cp -r cline/fast-download/* ~/.cline/skills/fast-download/
 ```bash
 # Copy agent file
 mkdir -p ~/.config/JetBrains/ai/agents
-cp claude-code/fast-download.md ~/.config/JetBrains/ai/agents/fast-download.md
+cp jetbrains/fast-download.md ~/.config/JetBrains/ai/agents/fast-download.md
 
 # Settings → AI Assistant → Agents → fast-download
 ```
@@ -202,7 +202,7 @@ cp claude-code/fast-download.md ~/.config/JetBrains/ai/agents/fast-download.md
 ```bash
 # Copy agent file
 mkdir -p ~/.aws/amazonq/agents
-cp claude-code/fast-download.md ~/.aws/amazonq/agents/fast-download.md
+cp amazon-q/fast-download.md ~/.aws/amazonq/agents/fast-download.md
 
 # CLI: amazonq agent install
 ```
@@ -211,7 +211,7 @@ cp claude-code/fast-download.md ~/.aws/amazonq/agents/fast-download.md
 ```bash
 # Copy agent file
 mkdir -p ~/.warp/agents
-cp continue/fast-download.yaml ~/.warp/agents/fast-download.yaml
+cp warp/fast-download.yaml ~/.warp/agents/fast-download.yaml
 
 # Settings → AI → Agents
 ```

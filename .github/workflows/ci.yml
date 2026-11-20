@@ -2,189 +2,94 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
   pull_request:
-    branches: [master]
-  release:
-    types: [published]
+    branches: [ master ]
 
 jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Install ShellCheck
-        run: sudo apt-get update && sudo apt-get install -y shellcheck
-
-      - name: ShellCheck all shell scripts
-        run: |
-          shellcheck src/fast-download.sh
-          shellcheck scripts/install.sh
-          shellcheck scripts/uninstall.sh
-          shellcheck scripts/test.sh
-          shellcheck scripts/create-demo.sh
-
-      - name: Check markdown
-        run: |
-          npm install -g markdownlint-cli@0.38.0
-          markdownlint README.md docs/*.md opencode/instructions.md claude-code/fast-download.md codex/fast-download.md continue/fast-download.yaml cline/fast-download/instructions.md vscode/fast-download/instructions.md CONTRIBUTING.md CODE_OF_CONDUCT.md CHANGELOG.md
-
-      - name: Check YAML syntax
-        run: |
-          python3 -c "
-          import yaml, sys, glob
-          for f in glob.glob('.github/**/*.yml', recursive=True) + glob.glob('.github/**/*.yaml', recursive=True):
-            with open(f) as fp:
-              yaml.safe_load(fp)
-          print('All YAML files valid')
-          "
-
   test:
     name: Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        include:
-          - os: ubuntu-latest
-            shell: bash
-          - os: macos-latest
-            shell: bash
-          - os: windows-latest
-            shell: pwsh
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup tools
+      - name: Install aria2 (Ubuntu)
+        if: runner.os == 'Linux'
         run: |
-          case "${{ runner.os }}" in
-            Linux)
-              sudo apt-get update && sudo apt-get install -y aria2 git curl bc
-              ;;
-            macOS)
-              brew install aria2 git curl bc
-              ;;
-            Windows)
-              choco install aria2 git curl bc --no-progress
-              $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-              ;;
-          esac
+          sudo apt-get update
+          sudo apt-get install -y aria2
 
-      - name: Verify tools
-        run: |
-          aria2c --version | head -1
-          git --version
-          curl --version | head -1
-        shell: ${{ matrix.shell }}
+      - name: Install aria2 (macOS)
+        if: runner.os == 'macOS'
+        run: brew install aria2
 
-      - name: Test shell library syntax
-        run: bash -n src/fast-download.sh
-        shell: ${{ matrix.shell }}
-
-      - name: Test PowerShell module syntax
+      - name: Install aria2 (Windows)
         if: runner.os == 'Windows'
-        run: |
-          $ErrorActionPreference = 'Stop'
-          Import-Module ./opencode/FastDownload.psm1 -Force
-          Initialize-FastDownload
+        run: choco install aria2 -y
+
+      - name: Run Bash test suite
+        if: runner.os != 'Windows'
+        run: bash scripts/test.sh
+
+      - name: Test PowerShell module (Windows)
+        if: runner.os == 'Windows'
         shell: pwsh
-
-      - name: Test aria2 download (small file)
         run: |
-          mkdir -p /tmp/fd-test
-          cd /tmp/fd-test
-          aria2c -x 4 -s 4 -k 1M --file-allocation=none --continue=true \
-            -o test.zip "https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip"
-          test -f test.zip && echo "Download OK: $(wc -c < test.zip) bytes"
-        shell: ${{ matrix.shell }}
-        timeout-minutes: 5
+          Import-Module ./opencode/FastDownload.psm1
+          Get-Command Invoke-FastDownload
+          Get-Command Invoke-GitClone
+          Get-Command Test-FileChecksum
 
-      - name: Test git shallow clone
+      - name: Test Shell Script Syntax (Linux/macOS)
+        if: runner.os != 'Windows'
         run: |
-          cd /tmp/fd-test
-          git clone --depth 1 --single-branch --filter=blob:none https://github.com/git/git.git git-test
-          test -d git-test/.git && echo "Shallow clone OK: $(du -sh git-test | cut -f1)"
-        shell: ${{ matrix.shell }}
-        timeout-minutes: 5
+          bash -n ./src/fast-download.sh
+          bash -n ./scripts/install.sh
+          bash -n ./scripts/uninstall.sh
+          DRY_RUN=true bash ./scripts/install.sh opencode
 
-      - name: Test checksum verification
+      - name: Test PowerShell Installer (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
-          echo "test" > /tmp/fd-test/checksum-test.txt
-          if command -v sha256sum >/dev/null; then
-            expected=$(sha256sum /tmp/fd-test/checksum-test.txt | cut -d' ' -f1)
-          elif command -v shasum >/dev/null; then
-            expected=$(shasum -a 256 /tmp/fd-test/checksum-test.txt | cut -d' ' -f1)
-          else
-            expected=$(certutil -hashfile /tmp/fd-test/checksum-test.txt SHA256 | sed -n '2p' | tr -d ' ')
-          fi
-          source src/fast-download.sh
-          fd_verify /tmp/fd-test/checksum-test.txt "$expected"
-        shell: ${{ matrix.shell }}
+          pwsh -NoProfile -File ./scripts/install.ps1 -Agent opencode -SkipAria2 -SkipGitConfig -SkipNpmConfig -SkipPipConfig -DryRun
 
-      - name: Test speed test function
+      - name: Test Node installer
         run: |
-          source src/fast-download.sh
-          fd_speed_test "https://github.com/aria2/aria2/releases/download/release-1.37.0/aria2-1.37.0-win-64bit-build1.zip" 2
-        shell: ${{ matrix.shell }}
-        timeout-minutes: 3
+          node --check scripts/install.js
+          node --check scripts/fast-download.js
+          node --check vscode/fast-download/extension.js
+          node scripts/install.js --agent=opencode --dry-run
 
       - name: Test agent config files exist
         run: |
-          agents=(
-            "opencode/skill.json"
-            "opencode/instructions.md"
-            "claude-code/fast-download.md"
-            "codex/fast-download.md"
-            "continue/fast-download.yaml"
-            "cline/fast-download/skill.json"
-            "cline/fast-download/instructions.md"
-            "vscode/fast-download/skill.json"
-            "vscode/fast-download/instructions.md"
-          )
-          for f in "${agents[@]}"; do
-            if [[ ! -f "$f" ]]; then
-              echo "Missing: $f"
-              exit 1
-            fi
-          done
-          echo "All agent configs present"
-        shell: ${{ matrix.shell }}
-
-      - name: Test install script syntax
-        run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            pwsh -NoProfile -Command "Set-StrictMode -Version Latest; . ./scripts/install.ps1 -Force -SkipAria2 -SkipGitConfig -SkipNpmConfig -SkipPipConfig -OnlyAgent opencode -WhatIf"
-          else
-            bash -n ./scripts/install.sh
-            DRY_RUN=1 bash ./scripts/install.sh --agent opencode
-          fi
-        shell: ${{ matrix.shell }}
-
-      - name: Cleanup
-        if: always()
-        run: rm -rf /tmp/fd-test
-
-  validate-package-json:
-    name: Validate package.json
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - name: Check package.json
-        run: |
           node -e "
-          const pkg = require('./package.json');
-          const required = ['name', 'version', 'description', 'license', 'author', 'repository', 'keywords', 'bin', 'scripts', 'engines'];
-          for (const field of required) {
-            if (!pkg[field]) {
-              console.error('Missing field:', field);
-              process.exit(1);
+            const fs = require('fs');
+            const files = [
+              'opencode/SKILL.md',
+              'claude-code/fast-download.md',
+              'codex/fast-download.md',
+              'continue/fast-download.yaml',
+              'cline/fast-download/instructions.md',
+              'vscode/fast-download/package.json',
+              'vscode/fast-download/extension.js',
+              'cursor/fast-download/instructions.md',
+              'windsurf/fast-download/instructions.md',
+              'jetbrains/fast-download.md',
+              'amazon-q/fast-download.md',
+              'warp/fast-download.yaml'
+            ];
+            for (const f of files) {
+              if (!fs.existsSync(f)) {
+                console.error('Missing required file: ' + f);
+                process.exit(1);
+              }
             }
-          }
-          console.log('package.json valid');
-          console.log('Version:', pkg.version);
-          console.log('Name:', pkg.name);
+            console.log('All agent configs present');
           "

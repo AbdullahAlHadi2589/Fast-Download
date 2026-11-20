@@ -239,8 +239,8 @@ fd_download() {
             "$url"
         )
 
-        # Use resume (-C -) only if not forcing curl (force_curl skips aria2 and often means no-range servers)
-        if [[ "$force_curl" != "true" ]]; then
+        # Use resume (-C -) only if file exists and is non-empty AND server supports ranges
+        if [[ -s "$output" ]] && _fd_server_supports_range "$url"; then
             curl_args=(-C - "${curl_args[@]}")
         fi
 

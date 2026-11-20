@@ -12,7 +12,8 @@ const REPO_ROOT = path.join(__dirname, '..');
 
 function hasCmd(cmd) {
     try {
-        execSync(`which ${cmd}`, { stdio: 'ignore' });
+        const checkCmd = process.platform === 'win32' ? `where ${cmd}` : `which ${cmd}`;
+        execSync(checkCmd, { stdio: 'ignore' });
         return true;
     } catch {
         return false;
@@ -62,6 +63,7 @@ Commands:
 Options:
   --force-curl                        Force using curl instead of aria2
   --agent=<name>                      Agent to install config for (install only)
+  --apply-global-configs              Apply global git/npm/pip optimizations (opt-in)
   --skip-aria2                        Skip aria2 installation check
   --skip-git-config                   Skip git config optimization
   --skip-npm-config                   Skip npm config optimization
@@ -80,12 +82,18 @@ Examples:
 `);
 }
 
+function stripChecksumPrefix(cs) {
+    if (!cs) return cs;
+    return cs.replace(/^(sha256|md5):/i, '');
+}
+
 async function runDownload(args) {
     if (args.length < 2) {
         console.error('Usage: fast-download download <url> <output> [checksum]');
         process.exit(1);
     }
-    const [url, output, checksum] = args;
+    const [url, output, rawChecksum] = args;
+    const checksum = stripChecksumPrefix(rawChecksum);
     const forceCurl = process.argv.includes('--force-curl');
     
     const shellLib = getShellLib();
@@ -137,7 +145,8 @@ async function runVerify(args) {
         console.error('Usage: fast-download verify <file> <checksum>');
         process.exit(1);
     }
-    const [file, checksum] = args;
+    const [file, rawChecksum] = args;
+    const checksum = stripChecksumPrefix(rawChecksum);
     
     const shellLib = getShellLib();
     if (shellLib) {

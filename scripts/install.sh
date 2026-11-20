@@ -249,6 +249,16 @@ else
 fi
 
 # --- 7. Deploy agent configurations ---
+# Support both positional (`install.sh opencode`) and `--agent=NAME` / `--agent NAME` forms
+i=0
+for arg in "$@"; do
+    case "$arg" in
+        --agent=*) AGENT="${arg#*=}" ;;
+        --agent)   AGENT="${@:i+2:1}" ;;
+    esac
+    ((i++))
+done
+
 deploy_agents=()
 if [[ "$AGENT" == "all" ]]; then
     deploy_agents=(opencode claude-code codex continue cline vscode cursor windsurf jetbrains amazon-q warp)
@@ -315,7 +325,7 @@ for a in "${deploy_agents[@]}"; do
             ;;
         cursor)
             target="${HOME}/.cursor/extensions/fast-download"
-            source="$REPO_ROOT/vscode/fast-download"
+            source="$REPO_ROOT/cursor/fast-download"
             if [[ -d "$source" ]]; then
                 mkdir_p "$target"
                 run_cmd cp -r "$source"/* "$target/"
@@ -324,7 +334,7 @@ for a in "${deploy_agents[@]}"; do
             ;;
         windsurf)
             target="${HOME}/.windsurf/extensions/fast-download"
-            source="$REPO_ROOT/vscode/fast-download"
+            source="$REPO_ROOT/windsurf/fast-download"
             if [[ -d "$source" ]]; then
                 mkdir_p "$target"
                 run_cmd cp -r "$source"/* "$target/"

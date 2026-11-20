@@ -100,7 +100,7 @@ curl -fsSL https://raw.githubusercontent.com/AbdullahAlHadi2589/Fast-Download/ma
 | **Cline** | `cline/fast-download/.clinerules` | Add `.clinerules` to project root | ✅ |
 | **Windsurf** | `windsurf/fast-download/.windsurfrules` | Add `.windsurfrules` to project root | ✅ |
 | **VS Code (Extension)** | `vscode/fast-download/package.json` | Run `code --install-extension fast-download` (when published) | ✅ |
-| **JetBrains AI** | `jetbrains/plugin.xml` + `fast-download.md` | Install plugin or use markdown instructions | ✅ |
+| **JetBrains AI** | `jetbrains/fast-download.md` | Place in JetBrains AI agents folder | Prompt-only |
 | **OpenAI Codex** | `codex/fast-download.md` | Place in `~/.codex/agents/` folder | ✅ |
 | **Continue.dev** | `continue/fast-download.yaml` | Add to `.continue/agents/` config | ✅ |
 | **Amazon Q Developer** | `amazon-q/fast-download.md` | Place in `~/.aws/amazonq/agents/` folder | ✅ |
@@ -230,6 +230,7 @@ fast-download/
 │   ├── FastDownload.psm1       # PowerShell module
 │   ├── skill.json              # Skill metadata
 │   ├── instructions.md         # Agent instructions
+│   ├── references/             # Reference documentation
 │   ├── test-skill.ps1          # Test script
 │   └── PERFORMANCE_REPORT.md   # Benchmarks
 ├── claude-code/
@@ -248,12 +249,14 @@ fast-download/
 │   └── instructions.md         # Instructions
 ├── vscode/fast-download/
 │   ├── package.json            # VS Code extension manifest
+│   ├── extension.js            # Extension entry point
 │   ├── skill.json              # Skill metadata
 │   └── instructions.md         # Instructions
 ├── windsurf/fast-download/
-│   └── .windsurfrules          # Windsurf rules
+│   ├── .windsurfrules          # Windsurf rules
+│   ├── skill.json              # Skill metadata
+│   └── instructions.md         # Instructions
 ├── jetbrains/
-│   ├── plugin.xml              # JetBrains plugin descriptor
 │   └── fast-download.md        # JetBrains AI agent
 ├── amazon-q/
 │   └── fast-download.md        # Amazon Q agent

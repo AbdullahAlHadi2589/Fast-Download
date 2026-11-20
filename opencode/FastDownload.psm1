@@ -213,8 +213,8 @@ function Invoke-FastDownload {
             $Url
         )
         
-        # Use resume (-C -) only if not forcing curl (ForceCurl skips aria2 and often means no-range servers)
-        if (-not $ForceCurl) {
+        # Use resume (-C -) only if file exists and is non-empty AND server supports ranges
+        if ((Test-Path $OutputPath) -and (Get-Item $OutputPath).Length -gt 0 -and (_Test-RangeSupport $Url)) {
             $curlArgs = @("-C", "-") + $curlArgs
         }
         

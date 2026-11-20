@@ -25,13 +25,13 @@
 param(
     [switch]$Force,
     [switch]$SkipAria2,
+    [switch]$SkipGitConfig,
     [switch]$SkipNpmConfig,
     [switch]$SkipPipConfig,
     [switch]$ApplyGlobalConfigs,
-    [switch]$OnlyAgent,
     [switch]$DryRun,
     [ValidateSet('opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp','all')]
-    [string]$Agent = 'all',
+    [string[]]$Agent = @('all'),
     [string]$InstallDir = "$env:USERPROFILE\.fast-download"
 )
 
@@ -185,7 +185,7 @@ if (Test-Path $psModule) {
 if ($ApplyGlobalConfigs) {
     Write-Log "Applying global optimizations (opt-in)..." 'Info'
     
-    if ($gitExe) {
+    if ($gitExe -and -not $SkipGitConfig) {
         Write-Log "Applying Git optimizations..." 'Info'
         Invoke-DryRunSafe { & $gitExe config --global core.compression 9 } "git config --global core.compression 9"
         Invoke-DryRunSafe { & $gitExe config --global core.preloadIndex true } "git config --global core.preloadIndex true"
@@ -218,7 +218,7 @@ if ($ApplyGlobalConfigs) {
 
 # 7. Deploy agent configurations
 $agents = @()
-if ($Agent -eq 'all') {
+if ($Agent -contains 'all') {
     $agents = @('opencode','claude-code','codex','continue','cline','vscode','cursor','windsurf','jetbrains','amazon-q','warp')
 } else {
     $agents = @($Agent)
@@ -283,7 +283,7 @@ foreach ($a in $agents) {
         }
         'cursor' {
             $target = "$env:USERPROFILE\.cursor\extensions\fast-download"
-            $source = "$repoRoot\vscode\fast-download"
+            $source = "$repoRoot\cursor\fast-download"
             if (Test-Path $source) {
                 New-DirectorySafe -Path $target
                 Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"
@@ -292,7 +292,7 @@ foreach ($a in $agents) {
         }
         'windsurf' {
             $target = "$env:USERPROFILE\.windsurf\extensions\fast-download"
-            $source = "$repoRoot\vscode\fast-download"
+            $source = "$repoRoot\windsurf\fast-download"
             if (Test-Path $source) {
                 New-DirectorySafe -Path $target
                 Invoke-DryRunSafe { Copy-Item "$source\*" $target -Recurse -Force } "cp -r $source\* $target"

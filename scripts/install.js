@@ -14,6 +14,7 @@ const args = process.argv.slice(2);
 const agentArg = args.find(a => a.startsWith('--agent='));
 const agents = agentArg ? agentArg.split('=')[1].split(',') : 'all';
 const skipAria2 = args.includes('--skip-aria2');
+const applyGlobalConfigs = args.includes('--apply-global-configs') || args.includes('--apply-configs');
 const skipGitConfig = args.includes('--skip-git-config');
 const skipNpmConfig = args.includes('--skip-npm-config');
 const skipPipConfig = args.includes('--skip-pip-config');
@@ -102,7 +103,8 @@ function writeFileSyncSafe(file, content) {
 
 function hasCmd(cmd) {
     try {
-        execSync(`which ${cmd}`, { stdio: 'ignore' });
+        const checkCmd = process.platform === 'win32' ? `where ${cmd}` : `which ${cmd}`;
+        execSync(checkCmd, { stdio: 'ignore' });
         return true;
     } catch {
         return false;
@@ -154,36 +156,41 @@ async function main() {
         }
     }
 
-    // 5. Apply global configs
-    if (!skipGitConfig && hasCmd('git')) {
-        log('Applying Git optimizations...');
-        run('git config --global core.compression 9');
-        run('git config --global core.preloadIndex true');
-        run('git config --global core.fscache true');
-        run('git config --global http.postBuffer 524288000');
-        run('git config --global http.lowSpeedLimit 0');
-        run('git config --global http.lowSpeedTime 999999');
-        log('Git config applied', 'success');
-    }
+    // 5. Apply global configs (OPT-IN ONLY with --apply-global-configs / --apply-configs)
+    if (applyGlobalConfigs) {
+        log('Applying global optimizations (opt-in)...');
+        if (!skipGitConfig && hasCmd('git')) {
+            log('Applying Git optimizations...');
+            run('git config --global core.compression 9');
+            run('git config --global core.preloadIndex true');
+            run('git config --global core.fscache true');
+            run('git config --global http.postBuffer 524288000');
+            run('git config --global http.lowSpeedLimit 0');
+            run('git config --global http.lowSpeedTime 999999');
+            log('Git config applied', 'success');
+        }
 
-    if (!skipNpmConfig && hasCmd('npm')) {
-        log('Applying npm optimizations...');
-        run('npm config set fetch-retries 5');
-        run('npm config set fetch-retry-factor 2');
-        run('npm config set prefer-offline true');
-        log('npm config applied', 'success');
-    }
+        if (!skipNpmConfig && hasCmd('npm')) {
+            log('Applying npm optimizations...');
+            run('npm config set fetch-retries 5');
+            run('npm config set fetch-retry-factor 2');
+            run('npm config set prefer-offline true');
+            log('npm config applied', 'success');
+        }
 
-    if (!skipPipConfig && hasCmd('pip')) {
-        log('Applying pip optimizations...');
-        run('pip config set global.retries 5');
-        run('pip config set global.timeout 60');
-        log('pip config applied', 'success');
+        if (!skipPipConfig && hasCmd('pip')) {
+            log('Applying pip optimizations...');
+            run('pip config set global.retries 5');
+            run('pip config set global.timeout 60');
+            log('pip config applied', 'success');
+        }
+    } else {
+        log('Skipping global configs (use --apply-global-configs to enable)');
     }
 
     // 6. Deploy agent configurations
     const allAgents = ['opencode', 'claude-code', 'codex', 'continue', 'cline', 'vscode', 'cursor', 'windsurf', 'jetbrains', 'amazon-q', 'warp'];
-    const deployAgents = agents === 'all' ? allAgents : agents;
+    const deployAgents = agents === 'all' ? allAgents : (Array.isArray(agents) ? agents : [agents]);
 
     for (const agent of deployAgents) {
         log(`Deploying ${agent} configuration...`);
@@ -208,19 +215,19 @@ async function main() {
                     deployDir(path.join(REPO_ROOT, 'vscode/fast-download'), path.join(os.homedir(), '.vscode/extensions/fast-download'));
                     break;
                 case 'cursor':
-                    deployDir(path.join(REPO_ROOT, 'vscode/fast-download'), path.join(os.homedir(), '.cursor/extensions/fast-download'));
+                    deployDir(path.join(REPO_ROOT, 'cursor/fast-download'), path.join(os.homedir(), '.cursor/extensions/fast-download'));
                     break;
                 case 'windsurf':
-                    deployDir(path.join(REPO_ROOT, 'vscode/fast-download'), path.join(os.homedir(), '.windsurf/extensions/fast-download'));
+                    deployDir(path.join(REPO_ROOT, 'windsurf/fast-download'), path.join(os.homedir(), '.windsurf/extensions/fast-download'));
                     break;
                 case 'jetbrains':
-                    deployFile(path.join(REPO_ROOT, 'claude-code/fast-download.md'), path.join(os.homedir(), '.config/JetBrains/ai/agents/fast-download.md'));
+                    deployFile(path.join(REPO_ROOT, 'jetbrains/fast-download.md'), path.join(os.homedir(), '.config/JetBrains/ai/agents/fast-download.md'));
                     break;
                 case 'amazon-q':
-                    deployFile(path.join(REPO_ROOT, 'claude-code/fast-download.md'), path.join(os.homedir(), '.aws/amazonq/agents/fast-download.md'));
+                    deployFile(path.join(REPO_ROOT, 'amazon-q/fast-download.md'), path.join(os.homedir(), '.aws/amazonq/agents/fast-download.md'));
                     break;
                 case 'warp':
-                    deployFile(path.join(REPO_ROOT, 'continue/fast-download.yaml'), path.join(os.homedir(), '.warp/agents/fast-download.yaml'));
+                    deployFile(path.join(REPO_ROOT, 'warp/fast-download.yaml'), path.join(os.homedir(), '.warp/agents/fast-download.yaml'));
                     break;
             }
         } catch (e) {
